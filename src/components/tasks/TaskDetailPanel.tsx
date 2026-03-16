@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { format, parseISO } from 'date-fns'
 import useAppStore from '../../store/useAppStore'
-import { updateTask, createTask, completeTask, uncompleteTask } from '../../api/tasks'
+import { updateTask, createTask, deleteTask, completeTask, uncompleteTask } from '../../api/tasks'
 import { parseNotes, serializeNotes } from '../../lib/task-metadata'
 import type { TaskMetadata } from '../../types'
 import TagInput from './TagInput'
@@ -27,6 +27,59 @@ function FlagIcon({ className }: { className?: string }) {
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
       <path d="M5 3v18M5 3h11.5a1 1 0 0 1 .8 1.6L14 9l3.3 4.4a1 1 0 0 1-.8 1.6H5" />
     </svg>
+  )
+}
+
+function MoveToListRow({ task, currentListId }: { task: import('../../types').Task; currentListId: string }) {
+  const taskLists = useAppStore((s) => s.taskLists)
+  const setTasks = useAppStore((s) => s.setTasks)
+  const clearSelectedTask = useAppStore((s) => s.clearSelectedTask)
+  const [isMoving, setIsMoving] = useState(false)
+
+  async function handleMove(newListId: string) {
+    if (newListId === currentListId || isMoving) return
+    setIsMoving(true)
+
+    const oldListTasks = useAppStore.getState().tasks[currentListId] ?? []
+    const newListTasks = useAppStore.getState().tasks[newListId] ?? []
+
+    // Optimistic: remove from old list, close panel
+    setTasks(currentListId, oldListTasks.filter((t) => t.id !== task.id))
+    clearSelectedTask()
+
+    try {
+      await deleteTask(currentListId, task.id)
+      const created = await createTask(newListId, {
+        title: task.title,
+        notes: task.notes,
+        due: task.due ?? undefined,
+        status: task.status,
+      })
+      setTasks(newListId, [...(useAppStore.getState().tasks[newListId] ?? newListTasks), created])
+    } catch {
+      // Revert
+      setTasks(currentListId, oldListTasks)
+      setIsMoving(false)
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-xs font-medium text-gray-500 w-20 shrink-0">List</span>
+      <select
+        value={currentListId}
+        onChange={(e) => handleMove(e.target.value)}
+        disabled={isMoving}
+        className="flex-1 text-xs border border-gray-200 rounded-md px-2 py-1 bg-gray-50 text-gray-700 outline-none focus:border-indigo-300 focus:bg-white transition-colors disabled:opacity-50"
+        data-testid="move-to-list-select"
+      >
+        {taskLists.map((list) => (
+          <option key={list.id} value={list.id}>
+            {list.title}
+          </option>
+        ))}
+      </select>
+    </div>
   )
 }
 
@@ -453,6 +506,9 @@ function TaskDetailPanel() {
                   <TagInput tags={tags} onChange={handleTagsChange} />
                 </div>
               </div>
+
+              {/* Move to list */}
+              <MoveToListRow task={task} currentListId={selectedTask!.listId} />
 
               {/* Subtasks */}
               <SubtasksSection taskId={task.id} listId={selectedTask!.listId} />
