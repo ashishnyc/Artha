@@ -13,6 +13,7 @@ function TaskItem({ task, listId }: TaskItemProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const setTasks = useAppStore((s) => s.setTasks)
   const tasks = useAppStore((s) => s.tasks[listId] ?? [])
+  const setSelectedTask = useAppStore((s) => s.setSelectedTask)
 
   const isCompleted = task.status === 'completed'
 
@@ -93,7 +94,8 @@ function TaskItem({ task, listId }: TaskItemProps) {
 
       {/* Title */}
       <span
-        className={`flex-1 text-sm ${isCompleted ? 'line-through text-gray-400' : 'text-gray-800'}`}
+        className={`flex-1 text-sm cursor-pointer ${isCompleted ? 'line-through text-gray-400' : 'text-gray-800 hover:text-indigo-600'}`}
+        onClick={() => setSelectedTask({ taskId: task.id, listId })}
         data-testid="task-title"
       >
         {task.title}
