@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import AppShell from './components/layout/AppShell'
+import TaskListPage from './pages/TaskListPage'
 
 const router = createBrowserRouter([
   {
@@ -28,7 +29,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'list/:listId',
-        element: <div>Task List</div>,
+        element: <TaskListPage />,
       },
       {
         path: 'completed',
