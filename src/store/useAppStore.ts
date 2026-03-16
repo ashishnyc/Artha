@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { TaskList, Task, GoogleUser } from '../types'
+import type { TaskList, Task, GoogleUser } from '../types'
 
 interface AuthState {
   token: string | null

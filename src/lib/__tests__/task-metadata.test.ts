@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { parseNotes, serializeNotes, defaultMetadata } from '../task-metadata'
-import { TaskMetadata } from '../../types'
+import type { TaskMetadata } from '../../types'
 
 const DELIMITER = '\n---artha---\n'
 
