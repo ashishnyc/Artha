@@ -4,6 +4,7 @@ import useAppStore from '../../store/useAppStore'
 import { updateTask } from '../../api/tasks'
 import { parseNotes, serializeNotes } from '../../lib/task-metadata'
 import type { TaskMetadata } from '../../types'
+import TagInput from './TagInput'
 
 type Priority = TaskMetadata['priority']
 
@@ -168,10 +169,9 @@ function TaskDetailPanel() {
     }
   }
 
-  async function handleTagRemove(tag: string) {
+  async function handleTagsChange(newTags: string[]) {
     if (!task || !selectedTask) return
     const { userNotes, metadata } = parseNotes(task.notes ?? '')
-    const newTags = metadata.tags.filter((t) => t !== tag)
     const updatedNotes = serializeNotes(userNotes, { ...metadata, tags: newTags })
 
     const tasks = useAppStore.getState().tasks[selectedTask.listId] ?? []
@@ -317,33 +317,12 @@ function TaskDetailPanel() {
                 )}
               </div>
               {/* Tags */}
-              {tags.length > 0 && (
-                <div className="flex items-start gap-2">
-                  <span className="text-xs font-medium text-gray-500 w-20 shrink-0 pt-1">Tags</span>
-                  <div className="flex flex-wrap gap-1.5" data-testid="tag-chips">
-                    {tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-full border border-indigo-100"
-                        data-testid={`tag-chip-${tag}`}
-                      >
-                        {tag}
-                        <button
-                          type="button"
-                          onClick={() => handleTagRemove(tag)}
-                          aria-label={`Remove tag ${tag}`}
-                          className="text-indigo-300 hover:text-indigo-600 transition-colors"
-                          data-testid={`tag-remove-${tag}`}
-                        >
-                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </span>
-                    ))}
-                  </div>
+              <div className="flex items-start gap-2">
+                <span className="text-xs font-medium text-gray-500 w-20 shrink-0 pt-1.5">Tags</span>
+                <div className="flex-1">
+                  <TagInput tags={tags} onChange={handleTagsChange} />
                 </div>
-              )}
+              </div>
 
               {/* Priority */}
               <div ref={priorityPickerRef} className="relative">
