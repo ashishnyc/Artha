@@ -14,9 +14,8 @@ export const VITE_GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as st
 
 export const VITE_CLAUDE_API_KEY = import.meta.env.VITE_CLAUDE_API_KEY as string
 
-export const OAUTH_REDIRECT_URI = typeof window !== 'undefined'
-  ? window.location.origin
-  : ''
+export const OAUTH_REDIRECT_URI = (import.meta.env.VITE_GOOGLE_REDIRECT_URI as string) ||
+  (typeof window !== 'undefined' ? window.location.origin : '')
 
 export const TASK_STATUS = {
   NEEDS_ACTION: 'needsAction',
