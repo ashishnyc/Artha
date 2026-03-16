@@ -43,6 +43,7 @@ function TaskDetailPanel() {
   const [descValue, setDescValue] = useState('')
   const [dueDateValue, setDueDateValue] = useState('')
   const [priority, setPriority] = useState<Priority>('none')
+  const [tags, setTags] = useState<string[]>([])
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [showPriorityPicker, setShowPriorityPicker] = useState(false)
   const titleRef = useRef<HTMLInputElement>(null)
@@ -55,6 +56,7 @@ function TaskDetailPanel() {
     const { metadata } = parseNotes(task?.notes ?? '')
     setDescValue(metadata.description)
     setPriority(metadata.priority)
+    setTags(metadata.tags)
     setDueDateValue(task?.due ? format(parseISO(task.due), 'yyyy-MM-dd') : '')
     setShowDatePicker(false)
     setShowPriorityPicker(false)
@@ -163,6 +165,31 @@ function TaskDetailPanel() {
     } catch {
       useAppStore.getState().setTasks(selectedTask.listId, tasks)
       setPriority(metadata.priority)
+    }
+  }
+
+  async function handleTagRemove(tag: string) {
+    if (!task || !selectedTask) return
+    const { userNotes, metadata } = parseNotes(task.notes ?? '')
+    const newTags = metadata.tags.filter((t) => t !== tag)
+    const updatedNotes = serializeNotes(userNotes, { ...metadata, tags: newTags })
+
+    const tasks = useAppStore.getState().tasks[selectedTask.listId] ?? []
+    setTags(newTags)
+    useAppStore.getState().setTasks(
+      selectedTask.listId,
+      tasks.map((t) =>
+        t.id === task.id
+          ? { ...t, notes: updatedNotes, metadata: { ...t.metadata, tags: newTags } }
+          : t,
+      ),
+    )
+
+    try {
+      await updateTask(selectedTask.listId, task.id, { notes: updatedNotes })
+    } catch {
+      useAppStore.getState().setTasks(selectedTask.listId, tasks)
+      setTags(metadata.tags)
     }
   }
 
@@ -289,6 +316,35 @@ function TaskDetailPanel() {
                   </div>
                 )}
               </div>
+              {/* Tags */}
+              {tags.length > 0 && (
+                <div className="flex items-start gap-2">
+                  <span className="text-xs font-medium text-gray-500 w-20 shrink-0 pt-1">Tags</span>
+                  <div className="flex flex-wrap gap-1.5" data-testid="tag-chips">
+                    {tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-full border border-indigo-100"
+                        data-testid={`tag-chip-${tag}`}
+                      >
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() => handleTagRemove(tag)}
+                          aria-label={`Remove tag ${tag}`}
+                          className="text-indigo-300 hover:text-indigo-600 transition-colors"
+                          data-testid={`tag-remove-${tag}`}
+                        >
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Priority */}
               <div ref={priorityPickerRef} className="relative">
                 <div className="flex items-center gap-2">
