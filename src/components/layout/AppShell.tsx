@@ -1,5 +1,6 @@
 import Sidebar from './Sidebar'
 import MainContent from './MainContent'
+import TaskDetailPanel from '../tasks/TaskDetailPanel'
 
 function AppShell() {
   return (
@@ -9,6 +10,7 @@ function AppShell() {
     >
       <Sidebar />
       <MainContent />
+      <TaskDetailPanel />
     </div>
   )
 }

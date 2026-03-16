@@ -11,12 +11,18 @@ interface LoadingState {
   tasks: Record<string, boolean>
 }
 
+interface SelectedTask {
+  taskId: string
+  listId: string
+}
+
 interface AppStore {
   // Data
   taskLists: TaskList[]
   tasks: Record<string, Task[]>
   auth: AuthState
   loading: LoadingState
+  selectedTask: SelectedTask | null
 
   // Auth slice actions
   setToken: (token: string) => void
@@ -28,6 +34,10 @@ interface AppStore {
   setTasks: (listId: string, tasks: Task[]) => void
   setTaskListsLoading: (loading: boolean) => void
   setTasksLoading: (listId: string, loading: boolean) => void
+
+  // Selection actions
+  setSelectedTask: (selected: SelectedTask) => void
+  clearSelectedTask: () => void
 }
 
 const useAppStore = create<AppStore>((set) => ({
@@ -41,6 +51,7 @@ const useAppStore = create<AppStore>((set) => ({
     taskLists: false,
     tasks: {},
   },
+  selectedTask: null,
 
   setToken: (token) => set((state) => ({ auth: { ...state.auth, token } })),
 
@@ -63,6 +74,9 @@ const useAppStore = create<AppStore>((set) => ({
         tasks: { ...state.loading.tasks, [listId]: loading },
       },
     })),
+
+  setSelectedTask: (selected) => set({ selectedTask: selected }),
+  clearSelectedTask: () => set({ selectedTask: null }),
 }))
 
 export default useAppStore
