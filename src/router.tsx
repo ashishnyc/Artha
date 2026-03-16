@@ -3,6 +3,7 @@ import AppShell from './components/layout/AppShell'
 import TaskListPage from './pages/TaskListPage'
 import TodayPage from './pages/TodayPage'
 import UpcomingPage from './pages/UpcomingPage'
+import LoginPage from './pages/LoginPage'
 
 const router = createBrowserRouter([
   {
@@ -41,7 +42,7 @@ const router = createBrowserRouter([
   },
   {
     path: '/login',
-    element: <div>Login</div>,
+    element: <LoginPage />,
   },
 ])
 
