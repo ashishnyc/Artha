@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { format, parseISO } from 'date-fns'
 import useAppStore from '../../store/useAppStore'
 import { updateTask } from '../../api/tasks'
 import { parseNotes, serializeNotes } from '../../lib/task-metadata'
@@ -15,14 +16,30 @@ function TaskDetailPanel() {
 
   const [titleValue, setTitleValue] = useState('')
   const [descValue, setDescValue] = useState('')
+  const [dueDateValue, setDueDateValue] = useState('')
+  const [showDatePicker, setShowDatePicker] = useState(false)
   const titleRef = useRef<HTMLInputElement>(null)
+  const datePickerRef = useRef<HTMLDivElement>(null)
 
   // Sync local fields when task changes
   useEffect(() => {
     setTitleValue(task?.title ?? '')
     const { metadata } = parseNotes(task?.notes ?? '')
     setDescValue(metadata.description)
+    setDueDateValue(task?.due ? format(parseISO(task.due), 'yyyy-MM-dd') : '')
+    setShowDatePicker(false)
   }, [task?.id])
+
+  // Close date picker on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (datePickerRef.current && !datePickerRef.current.contains(e.target as Node)) {
+        setShowDatePicker(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const isOpen = !!selectedTask
 
@@ -70,6 +87,25 @@ function TaskDetailPanel() {
     } catch {
       useAppStore.getState().setTasks(selectedTask.listId, tasks)
       setDescValue(metadata.description)
+    }
+  }
+
+  async function handleDueDateSave(newDate: string) {
+    if (!task || !selectedTask) return
+    const newDue = newDate ? new Date(newDate + 'T00:00:00').toISOString() : null
+    if (newDue === task.due) return
+
+    const tasks = useAppStore.getState().tasks[selectedTask.listId] ?? []
+    useAppStore.getState().setTasks(
+      selectedTask.listId,
+      tasks.map((t) => (t.id === task.id ? { ...t, due: newDue } : t)),
+    )
+
+    try {
+      await updateTask(selectedTask.listId, task.id, { due: newDue ?? undefined })
+    } catch {
+      useAppStore.getState().setTasks(selectedTask.listId, tasks)
+      setDueDateValue(task.due ? format(parseISO(task.due), 'yyyy-MM-dd') : '')
     }
   }
 
@@ -146,6 +182,56 @@ function TaskDetailPanel() {
                 data-testid="task-detail-description"
                 aria-label="Task description"
               />
+
+              {/* Due date */}
+              <div ref={datePickerRef} className="relative">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-gray-500 w-20 shrink-0">Due date</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowDatePicker((v) => !v)}
+                    className={`flex items-center gap-1.5 text-sm px-2 py-1 rounded-md border transition-colors ${
+                      dueDateValue
+                        ? 'border-indigo-200 text-indigo-600 bg-indigo-50 hover:bg-indigo-100'
+                        : 'border-gray-200 text-gray-400 hover:bg-gray-50'
+                    }`}
+                    data-testid="due-date-button"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    {dueDateValue ? format(parseISO(dueDateValue), 'MMM d, yyyy') : 'Set date'}
+                  </button>
+                  {dueDateValue && (
+                    <button
+                      type="button"
+                      onClick={() => { setDueDateValue(''); handleDueDateSave('') }}
+                      className="text-gray-300 hover:text-red-400 transition-colors"
+                      aria-label="Clear due date"
+                      data-testid="clear-due-date"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+                {showDatePicker && (
+                  <div className="absolute top-full mt-1 left-20 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-10" data-testid="due-date-popover">
+                    <input
+                      type="date"
+                      value={dueDateValue}
+                      onChange={(e) => {
+                        setDueDateValue(e.target.value)
+                        handleDueDateSave(e.target.value)
+                        setShowDatePicker(false)
+                      }}
+                      className="text-sm border border-gray-200 rounded px-2 py-1 outline-none focus:border-indigo-400"
+                      data-testid="due-date-input"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
             <p className="text-sm text-gray-400">Task not found.</p>
