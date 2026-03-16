@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useTaskLists } from '../../hooks/useTaskLists'
 import { createTaskList } from '../../api/task-lists'
 import useAppStore from '../../store/useAppStore'
+import { useAllTags } from '../../hooks/useAllTags'
 
 function NavItem({
   to,
@@ -41,6 +42,18 @@ function Sidebar() {
   const user = useAppStore((s) => s.auth.user)
   const logout = useAppStore((s) => s.logout)
   const navigate = useNavigate()
+  const allTags = useAllTags()
+
+  // Count tasks per tag across all lists
+  const tagCounts: Record<string, number> = {}
+  for (const listTasks of Object.values(tasks)) {
+    for (const task of listTasks) {
+      if (task.status === 'completed') continue
+      for (const tag of task.metadata?.tags ?? []) {
+        tagCounts[tag] = (tagCounts[tag] ?? 0) + 1
+      }
+    }
+  }
 
   const [isAddingList, setIsAddingList] = useState(false)
   const [newListTitle, setNewListTitle] = useState('')
@@ -104,6 +117,23 @@ function Sidebar() {
               to={`/list/${list.id}`}
               label={list.title}
               count={taskCount(list.id)}
+            />
+          ))}
+        </nav>
+      )}
+
+      {/* Tags */}
+      {allTags.length > 0 && (
+        <nav className="px-3 pt-4 space-y-1" data-testid="tags-nav">
+          <p className="px-4 pb-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            Tags
+          </p>
+          {allTags.map((tag) => (
+            <NavItem
+              key={tag}
+              to={`/tag/${encodeURIComponent(tag)}`}
+              label={`#${tag}`}
+              count={tagCounts[tag]}
             />
           ))}
         </nav>
