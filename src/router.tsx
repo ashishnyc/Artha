@@ -4,6 +4,7 @@ import ProtectedRoute from './components/Auth/ProtectedRoute'
 import TaskListPage from './pages/TaskListPage'
 import TodayPage from './pages/TodayPage'
 import UpcomingPage from './pages/UpcomingPage'
+import TagPage from './pages/TagPage'
 import LoginPage from './pages/LoginPage'
 
 const router = createBrowserRouter([
@@ -41,6 +42,10 @@ const router = createBrowserRouter([
           {
             path: 'completed',
             element: <div>Completed</div>,
+          },
+          {
+            path: 'tag/:tag',
+            element: <TagPage />,
           },
         ],
       },
