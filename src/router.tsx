@@ -26,6 +26,14 @@ const router = createBrowserRouter([
         path: 'calendar',
         element: <div>Calendar</div>,
       },
+      {
+        path: 'list/:listId',
+        element: <div>Task List</div>,
+      },
+      {
+        path: 'completed',
+        element: <div>Completed</div>,
+      },
     ],
   },
   {
