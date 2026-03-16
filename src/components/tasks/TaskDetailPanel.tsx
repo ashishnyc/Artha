@@ -1,4 +1,6 @@
+import { useState, useEffect, useRef } from 'react'
 import useAppStore from '../../store/useAppStore'
+import { updateTask } from '../../api/tasks'
 
 function TaskDetailPanel() {
   const selectedTask = useAppStore((s) => s.selectedTask)
@@ -8,8 +10,50 @@ function TaskDetailPanel() {
       ? s.tasks[selectedTask.listId]?.find((t) => t.id === selectedTask.taskId) ?? null
       : null,
   )
+  const setTasks = useAppStore((s) => s.setTasks)
+
+  const [titleValue, setTitleValue] = useState('')
+  const titleRef = useRef<HTMLInputElement>(null)
+
+  // Sync local title when task changes
+  useEffect(() => {
+    setTitleValue(task?.title ?? '')
+  }, [task?.id])
 
   const isOpen = !!selectedTask
+
+  async function handleTitleSave() {
+    if (!task || !selectedTask) return
+    const trimmed = titleValue.trim()
+    if (!trimmed || trimmed === task.title) return
+
+    // Optimistic update
+    const tasks = useAppStore.getState().tasks[selectedTask.listId] ?? []
+    useAppStore.getState().setTasks(
+      selectedTask.listId,
+      tasks.map((t) => (t.id === task.id ? { ...t, title: trimmed } : t)),
+    )
+
+    try {
+      await updateTask(selectedTask.listId, task.id, { title: trimmed })
+    } catch {
+      // Revert
+      useAppStore.getState().setTasks(selectedTask.listId, tasks)
+      setTitleValue(task.title)
+    }
+  }
+
+  function handleTitleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleTitleSave()
+      titleRef.current?.blur()
+    }
+    if (e.key === 'Escape') {
+      setTitleValue(task?.title ?? '')
+      titleRef.current?.blur()
+    }
+  }
 
   return (
     <>
@@ -47,7 +91,17 @@ function TaskDetailPanel() {
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {task ? (
-            <p className="text-sm text-gray-800 font-medium">{task.title}</p>
+            <input
+              ref={titleRef}
+              type="text"
+              value={titleValue}
+              onChange={(e) => setTitleValue(e.target.value)}
+              onBlur={handleTitleSave}
+              onKeyDown={handleTitleKeyDown}
+              className="w-full text-base font-semibold text-gray-800 outline-none border-b-2 border-transparent focus:border-indigo-400 pb-1 transition-colors bg-transparent"
+              data-testid="task-detail-title"
+              aria-label="Task title"
+            />
           ) : (
             <p className="text-sm text-gray-400">Task not found.</p>
           )}
