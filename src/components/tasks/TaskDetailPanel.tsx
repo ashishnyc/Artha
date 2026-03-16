@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { format, parseISO } from 'date-fns'
 import useAppStore from '../../store/useAppStore'
-import { updateTask } from '../../api/tasks'
+import { updateTask, createTask, completeTask, uncompleteTask } from '../../api/tasks'
 import { parseNotes, serializeNotes } from '../../lib/task-metadata'
 import type { TaskMetadata } from '../../types'
 import TagInput from './TagInput'
@@ -27,6 +27,136 @@ function FlagIcon({ className }: { className?: string }) {
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
       <path d="M5 3v18M5 3h11.5a1 1 0 0 1 .8 1.6L14 9l3.3 4.4a1 1 0 0 1-.8 1.6H5" />
     </svg>
+  )
+}
+
+function SubtasksSection({ taskId, listId }: { taskId: string; listId: string }) {
+  const allTasks = useAppStore((s) => s.tasks[listId] ?? [])
+  const setTasks = useAppStore((s) => s.setTasks)
+  const subtasks = allTasks.filter((t) => t.parent === taskId)
+  const [addingTitle, setAddingTitle] = useState('')
+  const [isAdding, setIsAdding] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (isAdding) inputRef.current?.focus()
+  }, [isAdding])
+
+  const completedCount = subtasks.filter((t) => t.status === 'completed').length
+  const totalCount = subtasks.length
+
+  async function handleToggle(subtask: (typeof subtasks)[0]) {
+    const isCompleted = subtask.status === 'completed'
+    const updated = allTasks.map((t) =>
+      t.id === subtask.id ? { ...t, status: isCompleted ? ('needsAction' as const) : ('completed' as const) } : t,
+    )
+    setTasks(listId, updated)
+    try {
+      if (isCompleted) {
+        await uncompleteTask(listId, subtask.id)
+      } else {
+        await completeTask(listId, subtask.id)
+      }
+    } catch {
+      setTasks(listId, allTasks)
+    }
+  }
+
+  async function handleAddSubtask() {
+    const title = addingTitle.trim()
+    if (!title) { setIsAdding(false); return }
+    setAddingTitle('')
+    setIsAdding(false)
+    try {
+      const newTask = await createTask(listId, { title, parent: taskId })
+      setTasks(listId, [...allTasks, newTask])
+    } catch {
+      // silently fail — user can retry
+    }
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') { e.preventDefault(); handleAddSubtask() }
+    if (e.key === 'Escape') { setIsAdding(false); setAddingTitle('') }
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-gray-500">Subtasks</span>
+        {totalCount > 0 && (
+          <span className="text-xs text-gray-400">{completedCount}/{totalCount} done</span>
+        )}
+      </div>
+
+      {totalCount > 0 && (
+        <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-indigo-400 rounded-full transition-all"
+            style={{ width: `${Math.round((completedCount / totalCount) * 100)}%` }}
+          />
+        </div>
+      )}
+
+      {subtasks.length > 0 && (
+        <ul className="flex flex-col gap-1">
+          {subtasks.map((sub) => {
+            const isCompleted = sub.status === 'completed'
+            return (
+              <li key={sub.id} className="flex items-center gap-2 group">
+                <button
+                  type="button"
+                  onClick={() => handleToggle(sub)}
+                  aria-label={isCompleted ? 'Mark incomplete' : 'Mark complete'}
+                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+                    isCompleted ? 'bg-indigo-500 border-indigo-500 text-white' : 'border-gray-300 hover:border-indigo-400'
+                  }`}
+                  data-testid={`subtask-checkbox-${sub.id}`}
+                >
+                  {isCompleted && (
+                    <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </button>
+                <span
+                  className={`flex-1 text-xs ${isCompleted ? 'line-through text-gray-400' : 'text-gray-700'}`}
+                  data-testid={`subtask-title-${sub.id}`}
+                >
+                  {sub.title}
+                </span>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+
+      {isAdding ? (
+        <input
+          ref={inputRef}
+          type="text"
+          value={addingTitle}
+          onChange={(e) => setAddingTitle(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={handleAddSubtask}
+          placeholder="Subtask title…"
+          className="text-xs border border-indigo-300 rounded px-2 py-1 outline-none focus:border-indigo-400 bg-white"
+          data-testid="subtask-input"
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setIsAdding(true)}
+          className="flex items-center gap-1 text-xs text-gray-400 hover:text-indigo-500 transition-colors w-fit"
+          data-testid="add-subtask-button"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Add subtask
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -323,6 +453,9 @@ function TaskDetailPanel() {
                   <TagInput tags={tags} onChange={handleTagsChange} />
                 </div>
               </div>
+
+              {/* Subtasks */}
+              <SubtasksSection taskId={task.id} listId={selectedTask!.listId} />
 
               {/* Priority */}
               <div ref={priorityPickerRef} className="relative">
