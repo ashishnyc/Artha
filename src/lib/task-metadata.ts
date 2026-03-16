@@ -1,4 +1,4 @@
-import { TaskMetadata } from '../types'
+import type { TaskMetadata } from '../types'
 
 // Delimiter separating user-visible notes from the hidden JSON metadata block
 const METADATA_DELIMITER = '\n---artha---\n'

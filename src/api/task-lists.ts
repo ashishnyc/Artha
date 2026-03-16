@@ -1,6 +1,6 @@
 import { fetchWithAuth } from '../lib/api-client'
 import { GOOGLE_TASKS_API_BASE } from '../lib/constants'
-import { TaskList } from '../types'
+import type { TaskList } from '../types'
 
 const BASE = `${GOOGLE_TASKS_API_BASE}/users/@me/lists`
 

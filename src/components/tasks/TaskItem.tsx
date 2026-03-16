@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { format, isPast, parseISO } from 'date-fns'
-import { Task } from '../../types'
+import type { Task } from '../../types'
 import { completeTask, uncompleteTask, deleteTask } from '../../api/tasks'
 import useAppStore from '../../store/useAppStore'
 

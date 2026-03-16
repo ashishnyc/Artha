@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { format } from 'date-fns'
-import { Task, TaskMetadata } from '../../types'
+import type { Task, TaskMetadata } from '../../types'
 import { createTask } from '../../api/tasks'
 import { serializeNotes, defaultMetadata } from '../../lib/task-metadata'
 import useAppStore from '../../store/useAppStore'

@@ -1,4 +1,4 @@
-import { Task, TaskList, GoogleUser, TaskMetadata } from '../../types'
+import type { Task, TaskList, GoogleUser, TaskMetadata } from '../../types'
 
 let idCounter = 1
 const nextId = () => `mock-${idCounter++}`

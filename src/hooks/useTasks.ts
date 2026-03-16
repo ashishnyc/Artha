@@ -1,8 +1,9 @@
 import { useEffect } from 'react'
+import type { Task } from '../types'
 import { getTasks } from '../api/tasks'
 import useAppStore from '../store/useAppStore'
 
-const EMPTY_TASKS: import('../types').Task[] = []
+const EMPTY_TASKS: Task[] = []
 
 export function useTasks(listId: string | null) {
   const tasksForList = useAppStore((s) => (listId ? s.tasks[listId] : undefined))
