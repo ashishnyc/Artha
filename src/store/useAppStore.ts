@@ -18,6 +18,11 @@ interface AppStore {
   auth: AuthState
   loading: LoadingState
 
+  // Auth slice actions
+  setToken: (token: string) => void
+  setUser: (user: GoogleUser) => void
+  logout: () => void
+
   // Task slice actions
   setTaskLists: (taskLists: TaskList[]) => void
   setTasks: (listId: string, tasks: Task[]) => void
@@ -36,6 +41,12 @@ const useAppStore = create<AppStore>((set) => ({
     taskLists: false,
     tasks: {},
   },
+
+  setToken: (token) => set((state) => ({ auth: { ...state.auth, token } })),
+
+  setUser: (user) => set((state) => ({ auth: { ...state.auth, user } })),
+
+  logout: () => set({ auth: { token: null, user: null } }),
 
   setTaskLists: (taskLists) => set({ taskLists }),
 
