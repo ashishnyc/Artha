@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import AppShell from './components/layout/AppShell'
 import TaskListPage from './pages/TaskListPage'
 import TodayPage from './pages/TodayPage'
+import UpcomingPage from './pages/UpcomingPage'
 
 const router = createBrowserRouter([
   {
@@ -22,7 +23,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'upcoming',
-        element: <div>Upcoming</div>,
+        element: <UpcomingPage />,
       },
       {
         path: 'calendar',
