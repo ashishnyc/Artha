@@ -1,3 +1,5 @@
+import { OAUTH_REDIRECT_URI } from './constants'
+
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 const SCOPES = [
   'https://www.googleapis.com/auth/tasks',
@@ -8,7 +10,7 @@ const SCOPES = [
 export function getAuthUrl(): string {
   const params = new URLSearchParams({
     client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID as string,
-    redirect_uri: window.location.origin,
+    redirect_uri: OAUTH_REDIRECT_URI,
     response_type: 'token',
     scope: SCOPES.join(' '),
   })
