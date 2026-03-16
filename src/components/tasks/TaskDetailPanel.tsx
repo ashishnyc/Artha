@@ -3,6 +3,31 @@ import { format, parseISO } from 'date-fns'
 import useAppStore from '../../store/useAppStore'
 import { updateTask } from '../../api/tasks'
 import { parseNotes, serializeNotes } from '../../lib/task-metadata'
+import type { TaskMetadata } from '../../types'
+
+type Priority = TaskMetadata['priority']
+
+const PRIORITY_COLORS: Record<Priority, string> = {
+  none: 'text-gray-400',
+  low: 'text-blue-400',
+  medium: 'text-yellow-500',
+  high: 'text-red-500',
+}
+
+const PRIORITY_LABELS: Record<Priority, string> = {
+  none: 'No priority',
+  low: 'Low',
+  medium: 'Medium',
+  high: 'High',
+}
+
+function FlagIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M5 3v18M5 3h11.5a1 1 0 0 1 .8 1.6L14 9l3.3 4.4a1 1 0 0 1-.8 1.6H5" />
+    </svg>
+  )
+}
 
 function TaskDetailPanel() {
   const selectedTask = useAppStore((s) => s.selectedTask)
@@ -17,24 +42,32 @@ function TaskDetailPanel() {
   const [titleValue, setTitleValue] = useState('')
   const [descValue, setDescValue] = useState('')
   const [dueDateValue, setDueDateValue] = useState('')
+  const [priority, setPriority] = useState<Priority>('none')
   const [showDatePicker, setShowDatePicker] = useState(false)
+  const [showPriorityPicker, setShowPriorityPicker] = useState(false)
   const titleRef = useRef<HTMLInputElement>(null)
   const datePickerRef = useRef<HTMLDivElement>(null)
+  const priorityPickerRef = useRef<HTMLDivElement>(null)
 
   // Sync local fields when task changes
   useEffect(() => {
     setTitleValue(task?.title ?? '')
     const { metadata } = parseNotes(task?.notes ?? '')
     setDescValue(metadata.description)
+    setPriority(metadata.priority)
     setDueDateValue(task?.due ? format(parseISO(task.due), 'yyyy-MM-dd') : '')
     setShowDatePicker(false)
+    setShowPriorityPicker(false)
   }, [task?.id])
 
-  // Close date picker on outside click
+  // Close pickers on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (datePickerRef.current && !datePickerRef.current.contains(e.target as Node)) {
         setShowDatePicker(false)
+      }
+      if (priorityPickerRef.current && !priorityPickerRef.current.contains(e.target as Node)) {
+        setShowPriorityPicker(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -106,6 +139,30 @@ function TaskDetailPanel() {
     } catch {
       useAppStore.getState().setTasks(selectedTask.listId, tasks)
       setDueDateValue(task.due ? format(parseISO(task.due), 'yyyy-MM-dd') : '')
+    }
+  }
+
+  async function handlePrioritySave(newPriority: Priority) {
+    if (!task || !selectedTask) return
+    const { userNotes, metadata } = parseNotes(task.notes ?? '')
+    if (newPriority === metadata.priority) return
+
+    const updatedNotes = serializeNotes(userNotes, { ...metadata, priority: newPriority })
+    const tasks = useAppStore.getState().tasks[selectedTask.listId] ?? []
+    useAppStore.getState().setTasks(
+      selectedTask.listId,
+      tasks.map((t) =>
+        t.id === task.id
+          ? { ...t, notes: updatedNotes, metadata: { ...t.metadata, priority: newPriority } }
+          : t,
+      ),
+    )
+
+    try {
+      await updateTask(selectedTask.listId, task.id, { notes: updatedNotes })
+    } catch {
+      useAppStore.getState().setTasks(selectedTask.listId, tasks)
+      setPriority(metadata.priority)
     }
   }
 
@@ -229,6 +286,48 @@ function TaskDetailPanel() {
                       className="text-sm border border-gray-200 rounded px-2 py-1 outline-none focus:border-indigo-400"
                       data-testid="due-date-input"
                     />
+                  </div>
+                )}
+              </div>
+              {/* Priority */}
+              <div ref={priorityPickerRef} className="relative">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-gray-500 w-20 shrink-0">Priority</span>
+                  <button
+                    type="button"
+                    onClick={() => { setShowPriorityPicker((v) => !v); setShowDatePicker(false) }}
+                    className={`flex items-center gap-1.5 text-sm px-2 py-1 rounded-md border transition-colors ${
+                      priority !== 'none'
+                        ? 'border-gray-200 bg-gray-50 hover:bg-gray-100'
+                        : 'border-gray-200 text-gray-400 hover:bg-gray-50'
+                    }`}
+                    data-testid="priority-button"
+                  >
+                    <FlagIcon className={`w-3.5 h-3.5 ${PRIORITY_COLORS[priority]}`} />
+                    <span className={PRIORITY_COLORS[priority]}>{PRIORITY_LABELS[priority]}</span>
+                  </button>
+                </div>
+                {showPriorityPicker && (
+                  <div
+                    className="absolute top-full mt-1 left-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10 min-w-36"
+                    data-testid="priority-popover"
+                  >
+                    {(['none', 'low', 'medium', 'high'] as const).map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => {
+                          setPriority(p)
+                          handlePrioritySave(p)
+                          setShowPriorityPicker(false)
+                        }}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 ${priority === p ? 'font-medium' : ''}`}
+                        data-testid={`priority-option-${p}`}
+                      >
+                        <FlagIcon className={`w-3.5 h-3.5 ${PRIORITY_COLORS[p]}`} />
+                        <span className={PRIORITY_COLORS[p]}>{PRIORITY_LABELS[p]}</span>
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
