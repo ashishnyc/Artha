@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { useTaskLists } from '../../hooks/useTaskLists'
 import { createTaskList } from '../../api/task-lists'
 import useAppStore from '../../store/useAppStore'
@@ -38,6 +38,9 @@ function Sidebar() {
   const { taskLists } = useTaskLists()
   const tasks = useAppStore((s) => s.tasks)
   const setTaskLists = useAppStore((s) => s.setTaskLists)
+  const user = useAppStore((s) => s.auth.user)
+  const logout = useAppStore((s) => s.logout)
+  const navigate = useNavigate()
 
   const [isAddingList, setIsAddingList] = useState(false)
   const [newListTitle, setNewListTitle] = useState('')
@@ -106,8 +109,29 @@ function Sidebar() {
         </nav>
       )}
 
+      {/* User info */}
+      {user && (
+        <div className="px-4 py-3 border-t border-gray-700 flex items-center gap-3 mt-auto" data-testid="user-info">
+          <img
+            src={user.picture}
+            alt={user.name}
+            className="w-8 h-8 rounded-full shrink-0"
+            data-testid="user-avatar"
+          />
+          <span className="text-sm text-gray-300 truncate flex-1" data-testid="user-name">{user.name}</span>
+          <button
+            type="button"
+            onClick={() => { logout(); navigate('/login') }}
+            className="text-xs text-gray-500 hover:text-white transition-colors shrink-0"
+            data-testid="logout-button"
+          >
+            Sign out
+          </button>
+        </div>
+      )}
+
       {/* Bottom section */}
-      <div className="px-3 pb-4 mt-auto space-y-1">
+      <div className={`px-3 pb-4 space-y-1${user ? '' : ' mt-auto'}`}>
         <NavItem to="/completed" label="Completed" />
 
         {/* New List */}

@@ -60,6 +60,11 @@ export async function fetchWithAuth(
     response = await fetch(url, requestOptions)
   }
 
+  if (response.status === 401) {
+    useAppStore.getState().logout()
+    window.location.href = '/login'
+  }
+
   if (!response.ok) {
     throw await parseGoogleError(response)
   }
