@@ -1,5 +1,4 @@
 import { useEffect } from 'react'
-import { parseHashToken } from '../lib/google-auth'
 import useAppStore from '../store/useAppStore'
 
 async function fetchGoogleUser(token: string) {
@@ -11,18 +10,13 @@ async function fetchGoogleUser(token: string) {
 }
 
 export function useAuthInit() {
-  const setToken = useAppStore((s) => s.setToken)
+  const token = useAppStore((s) => s.auth.token)
   const setUser = useAppStore((s) => s.setUser)
 
   useEffect(() => {
-    const parsed = parseHashToken()
-    if (!parsed) return
-
-    setToken(parsed.accessToken)
-    window.history.replaceState(null, '', window.location.pathname + window.location.search)
-
-    fetchGoogleUser(parsed.accessToken).then((user) => {
+    if (!token) return
+    fetchGoogleUser(token).then((user) => {
       if (user) setUser(user)
     })
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [token]) // eslint-disable-line react-hooks/exhaustive-deps
 }
