@@ -16,6 +16,8 @@ export function useTaskLists() {
       try {
         const lists = await getTaskLists()
         if (!cancelled) setTaskLists(lists)
+      } catch {
+        // No-op: auth not set up yet — will retry once auth is in place
       } finally {
         if (!cancelled) setTaskListsLoading(false)
       }

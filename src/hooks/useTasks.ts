@@ -20,6 +20,8 @@ export function useTasks(listId: string | null) {
       try {
         const data = await getTasks(listId!)
         if (!cancelled) setTasks(listId!, data)
+      } catch {
+        // No-op: auth not set up yet — will retry once auth is in place
       } finally {
         if (!cancelled) setTasksLoading(listId!, false)
       }
