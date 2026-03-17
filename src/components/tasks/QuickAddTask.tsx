@@ -4,6 +4,9 @@ import type { Task, TaskMetadata } from '../../types'
 import { createTask } from '../../api/tasks'
 import { serializeNotes, defaultMetadata } from '../../lib/task-metadata'
 import useAppStore from '../../store/useAppStore'
+import { callClaude } from '../../lib/claude-client'
+import { NATURAL_LANGUAGE_TASK_SYSTEM_PROMPT } from '../../lib/ai-prompts'
+import { parseAISingleTask, type AITaskSuggestion } from '../../lib/ai-types'
 
 interface QuickAddTaskProps {
   listId: string
@@ -44,6 +47,13 @@ function CalendarIcon({ className }: { className?: string }) {
   )
 }
 
+const PRIORITY_MAP: Record<number, TaskMetadata['priority']> = {
+  0: 'none',
+  1: 'low',
+  2: 'medium',
+  3: 'high',
+}
+
 function QuickAddTask({ listId }: QuickAddTaskProps) {
   const [title, setTitle] = useState('')
   const [dueDate, setDueDate] = useState<string>('')
@@ -51,6 +61,12 @@ function QuickAddTask({ listId }: QuickAddTaskProps) {
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [showPriorityPicker, setShowPriorityPicker] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // AI mode
+  const [aiMode, setAiMode] = useState(false)
+  const [isParsing, setIsParsing] = useState(false)
+  const [preview, setPreview] = useState<AITaskSuggestion | null>(null)
+  const [parseError, setParseError] = useState<string | null>(null)
 
   const inputRef = useRef<HTMLInputElement>(null)
   const datePickerRef = useRef<HTMLDivElement>(null)
@@ -85,7 +101,78 @@ function QuickAddTask({ listId }: QuickAddTaskProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  const handleAIParse = useCallback(async () => {
+    const trimmed = title.trim()
+    if (!trimmed || isParsing) return
+    setIsParsing(true)
+    setParseError(null)
+    setPreview(null)
+    try {
+      const text = await callClaude(
+        [{ role: 'user', content: trimmed }],
+        NATURAL_LANGUAGE_TASK_SYSTEM_PROMPT,
+      )
+      const parsed = parseAISingleTask(text)
+      setPreview(parsed)
+    } catch (err) {
+      setParseError(err instanceof Error ? err.message : 'Failed to parse')
+    } finally {
+      setIsParsing(false)
+    }
+  }, [title, isParsing])
+
+  const handleConfirmPreview = useCallback(async () => {
+    if (!preview || isSubmitting) return
+    const resolvedPriority = PRIORITY_MAP[preview.priority ?? 0] ?? 'none'
+    const metadata = {
+      ...defaultMetadata(),
+      priority: resolvedPriority,
+      tags: preview.tags ?? [],
+    }
+    const notes = serializeNotes('', metadata)
+    const tempId = `temp-${Date.now()}`
+    const optimisticTask: Task = {
+      id: tempId,
+      title: preview.title,
+      notes,
+      status: 'needsAction',
+      due: preview.due ? new Date(preview.due).toISOString() : null,
+      parent: null,
+      position: '00000000000000000000',
+      metadata,
+    }
+    const currentTasks = useAppStore.getState().tasks[listId] ?? []
+    setTasks(listId, [...currentTasks, optimisticTask])
+    setTitle('')
+    setPreview(null)
+    setIsSubmitting(true)
+    try {
+      const created = await createTask(listId, {
+        title: preview.title,
+        notes,
+        due: preview.due ? new Date(preview.due).toISOString() : undefined,
+      })
+      setTasks(
+        listId,
+        useAppStore.getState().tasks[listId].map((t) =>
+          t.id === tempId ? { ...created, metadata } : t,
+        ),
+      )
+    } catch {
+      setTasks(
+        listId,
+        useAppStore.getState().tasks[listId].filter((t) => t.id !== tempId),
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
+  }, [preview, isSubmitting, listId, setTasks])
+
   const handleSubmit = useCallback(async () => {
+    if (aiMode) {
+      await handleAIParse()
+      return
+    }
     const trimmed = title.trim()
     if (!trimmed || isSubmitting) return
 
@@ -141,16 +228,82 @@ function QuickAddTask({ listId }: QuickAddTaskProps) {
 
   const dueDateLabel = dueDate ? format(new Date(dueDate + 'T00:00:00'), 'MMM d') : null
 
+  const previewPriority = preview ? (PRIORITY_MAP[preview.priority ?? 0] ?? 'none') : 'none'
+
   return (
     <div
       className="sticky bottom-0 bg-white border-t border-gray-100 px-4 py-3"
       data-testid="quick-add-task"
     >
-      <div className="flex items-center gap-2 max-w-2xl mx-auto bg-white border border-gray-200 rounded-lg px-3 py-2 focus-within:border-indigo-400 focus-within:ring-1 focus-within:ring-indigo-400 transition-all">
-        {/* Plus icon */}
-        <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-        </svg>
+      {/* AI preview card */}
+      {preview && (
+        <div
+          className="max-w-2xl mx-auto mb-2 border border-indigo-200 rounded-lg bg-indigo-50 px-4 py-3"
+          data-testid="ai-preview-card"
+        >
+          <p className="text-xs text-indigo-500 font-medium mb-1.5">AI parsed</p>
+          <p className="text-sm font-semibold text-gray-800 mb-1">{preview.title}</p>
+          <div className="flex items-center gap-2 flex-wrap">
+            {preview.due && (
+              <span className="text-xs text-gray-500">
+                {new Date(preview.due).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </span>
+            )}
+            {previewPriority !== 'none' && (
+              <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${PRIORITY_COLORS[previewPriority]}`}>
+                {previewPriority}
+              </span>
+            )}
+            {preview.tags?.map((tag) => (
+              <span key={tag} className="text-xs px-1.5 py-0.5 bg-white border border-gray-200 text-gray-500 rounded-full">
+                {tag}
+              </span>
+            ))}
+          </div>
+          <div className="flex gap-2 mt-2.5">
+            <button
+              type="button"
+              onClick={handleConfirmPreview}
+              disabled={isSubmitting}
+              className="text-xs px-3 py-1 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+              data-testid="confirm-ai-task"
+            >
+              Confirm
+            </button>
+            <button
+              type="button"
+              onClick={() => setPreview(null)}
+              className="text-xs px-3 py-1 border border-gray-200 text-gray-500 rounded-lg hover:bg-gray-50 transition-colors"
+              data-testid="dismiss-ai-preview"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
+      {parseError && (
+        <p className="max-w-2xl mx-auto mb-1 text-xs text-red-500" data-testid="ai-parse-error">{parseError}</p>
+      )}
+
+      <div className={`flex items-center gap-2 max-w-2xl mx-auto bg-white border rounded-lg px-3 py-2 transition-all ${
+        aiMode
+          ? 'border-indigo-400 ring-1 ring-indigo-400'
+          : 'border-gray-200 focus-within:border-indigo-400 focus-within:ring-1 focus-within:ring-indigo-400'
+      }`}>
+        {/* AI toggle */}
+        <button
+          type="button"
+          onClick={() => { setAiMode((v) => !v); setPreview(null); setParseError(null) }}
+          className={`shrink-0 transition-colors ${aiMode ? 'text-indigo-500' : 'text-gray-300 hover:text-indigo-400'}`}
+          data-testid="ai-mode-toggle"
+          aria-label="Toggle AI mode"
+          title={aiMode ? 'AI mode on' : 'AI mode off'}
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" />
+          </svg>
+        </button>
 
         {/* Title input */}
         <input
@@ -159,14 +312,16 @@ function QuickAddTask({ listId }: QuickAddTaskProps) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Add a task… (Ctrl+N)"
+          placeholder={aiMode ? 'Describe a task in natural language… (Enter to parse)' : 'Add a task… (Ctrl+N)'}
           className="flex-1 text-sm text-gray-800 placeholder-gray-400 outline-none bg-transparent"
           data-testid="quick-add-input"
           aria-label="New task title"
+          disabled={isParsing}
         />
 
+        {/* Date/priority pickers — hidden in AI mode */}
         {/* Date picker button */}
-        <div className="relative" ref={datePickerRef}>
+        <div className="relative" ref={datePickerRef} style={{ display: aiMode ? 'none' : undefined }}>
           <button
             type="button"
             onClick={() => {
@@ -217,7 +372,7 @@ function QuickAddTask({ listId }: QuickAddTaskProps) {
         </div>
 
         {/* Priority picker button */}
-        <div className="relative" ref={priorityPickerRef}>
+        <div className="relative" ref={priorityPickerRef} style={{ display: aiMode ? 'none' : undefined }}>
           <button
             type="button"
             onClick={() => {
@@ -261,11 +416,11 @@ function QuickAddTask({ listId }: QuickAddTaskProps) {
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={!title.trim() || isSubmitting}
+          disabled={!title.trim() || isSubmitting || isParsing}
           className="text-xs px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           data-testid="quick-add-submit"
         >
-          Add
+          {isParsing ? '…' : aiMode ? 'Parse' : 'Add'}
         </button>
       </div>
     </div>
