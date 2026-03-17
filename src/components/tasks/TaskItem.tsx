@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { format, isPast, parseISO } from 'date-fns'
 import type { Task } from '../../types'
 import { completeTask, uncompleteTask, deleteTask } from '../../api/tasks'
@@ -11,9 +12,11 @@ interface TaskItemProps {
 
 function TaskItem({ task, listId }: TaskItemProps) {
   const [isDeleting, setIsDeleting] = useState(false)
+  const navigate = useNavigate()
   const setTasks = useAppStore((s) => s.setTasks)
   const tasks = useAppStore((s) => s.tasks[listId] ?? [])
   const setSelectedTask = useAppStore((s) => s.setSelectedTask)
+  const setCurrentFocusTask = useAppStore((s) => s.setCurrentFocusTask)
 
   const isCompleted = task.status === 'completed'
 
@@ -103,6 +106,24 @@ function TaskItem({ task, listId }: TaskItemProps) {
 
       {/* Due badge */}
       {dueBadge()}
+
+      {/* Start focus button — visible on hover, only for incomplete tasks */}
+      {!isCompleted && (
+        <button
+          onClick={() => {
+            setCurrentFocusTask({ taskId: task.id, listId, title: task.title })
+            navigate('/pomodoro')
+          }}
+          aria-label="Start focus"
+          className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-indigo-500 transition-all"
+          data-testid="start-focus-button"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </button>
+      )}
 
       {/* Delete button — visible on hover */}
       <button
