@@ -13,6 +13,7 @@ import { useTasks } from '../hooks/useTasks'
 import useAppStore from '../store/useAppStore'
 import TaskItem from '../components/tasks/TaskItem'
 import EmptyState from '../components/tasks/EmptyState'
+import TaskSkeleton from '../components/tasks/TaskSkeleton'
 import QuickAddTask from '../components/tasks/QuickAddTask'
 import { moveTask } from '../api/tasks'
 import type { Task } from '../types'
@@ -69,14 +70,6 @@ function TaskListPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full" data-testid="loading">
-        <div className="text-gray-400 text-sm">Loading tasks…</div>
-      </div>
-    )
-  }
-
   return (
     <div className="flex flex-col h-full" data-testid="task-list-page">
       <div className="flex-1 overflow-y-auto">
@@ -94,7 +87,9 @@ function TaskListPage() {
             </select>
           </div>
 
-          {tasks.length === 0 ? (
+          {loading ? (
+            <TaskSkeleton count={6} />
+          ) : tasks.length === 0 ? (
             <EmptyState />
           ) : (
             <>

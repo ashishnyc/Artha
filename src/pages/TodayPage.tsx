@@ -3,6 +3,7 @@ import { isToday, isPast, parseISO, format } from 'date-fns'
 import { useAllListsTasks } from '../hooks/useAllListsTasks'
 import type { TaskWithList } from '../hooks/useAllListsTasks'
 import TaskItem from '../components/tasks/TaskItem'
+import TaskSkeleton from '../components/tasks/TaskSkeleton'
 import DailyPlannerDialog from '../components/AI/DailyPlannerDialog'
 
 function isOverdue(task: TaskWithList): boolean {
@@ -20,16 +21,8 @@ function TodayPage() {
   const { tasks, loading } = useAllListsTasks()
   const [plannerOpen, setPlannerOpen] = useState(false)
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full" data-testid="loading">
-        <div className="text-gray-400 text-sm">Loading…</div>
-      </div>
-    )
-  }
-
-  const overdue = tasks.filter(isOverdue)
-  const todayTasks = tasks.filter(isDueToday)
+  const overdue = loading ? [] : tasks.filter(isOverdue)
+  const todayTasks = loading ? [] : tasks.filter(isDueToday)
 
   // Group today's tasks by list
   const todayByList = todayTasks.reduce<Record<string, TaskWithList[]>>((acc, task) => {
@@ -60,11 +53,13 @@ function TodayPage() {
         </div>
         <p className="text-sm text-gray-400 mb-6">{format(new Date(), 'EEEE, MMMM d')}</p>
 
-        {!hasAnything && (
+        {loading && <TaskSkeleton count={4} />}
+
+        {!loading && !hasAnything && (
           <div className="flex flex-col items-center justify-center py-24 text-center" data-testid="empty-state">
-            <div className="text-5xl mb-4">✓</div>
-            <h2 className="text-xl font-semibold text-gray-700 mb-2">All caught up!</h2>
-            <p className="text-gray-400 text-sm">No tasks due today</p>
+            <div className="text-5xl mb-4">☀️</div>
+            <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">All clear for today</h2>
+            <p className="text-gray-400 dark:text-gray-500 text-sm">Nothing due today — enjoy the calm</p>
           </div>
         )}
 

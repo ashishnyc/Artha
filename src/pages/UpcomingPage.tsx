@@ -3,6 +3,7 @@ import { addDays, format, parseISO, startOfDay, isSameDay } from 'date-fns'
 import { useAllListsTasks } from '../hooks/useAllListsTasks'
 import type { TaskWithList } from '../hooks/useAllListsTasks'
 import TaskItem from '../components/tasks/TaskItem'
+import TaskSkeleton from '../components/tasks/TaskSkeleton'
 import { createTask } from '../api/tasks'
 import { serializeNotes, defaultMetadata } from '../lib/task-metadata'
 import useAppStore from '../store/useAppStore'
@@ -112,18 +113,10 @@ function UpcomingPage() {
   const taskLists = useAppStore((s) => s.taskLists)
   const defaultListId = taskLists[0]?.id
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full" data-testid="loading">
-        <div className="text-gray-400 text-sm">Loading…</div>
-      </div>
-    )
-  }
-
   const upcomingDays = getUpcomingDays()
 
   // Group non-completed tasks by yyyy-MM-dd (local date)
-  const tasksByDay = tasks.reduce<Record<string, TaskWithList[]>>((acc, task) => {
+  const tasksByDay = (loading ? [] : tasks).reduce<Record<string, TaskWithList[]>>((acc, task) => {
     if (!task.due || task.status === 'completed') return acc
     const dayKey = format(parseISO(task.due), 'yyyy-MM-dd')
     if (!acc[dayKey]) acc[dayKey] = []
@@ -138,14 +131,16 @@ function UpcomingPage() {
       <div className="max-w-2xl mx-auto w-full px-4 py-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Upcoming</h1>
 
-        {!hasAnything && (
+        {loading && <TaskSkeleton count={5} />}
+
+        {!loading && !hasAnything && (
           <div
             className="flex flex-col items-center justify-center py-24 text-center"
             data-testid="empty-state"
           >
             <div className="text-5xl mb-4">📅</div>
-            <h2 className="text-xl font-semibold text-gray-700 mb-2">Nothing upcoming</h2>
-            <p className="text-gray-400 text-sm">No tasks scheduled for the next 7 days</p>
+            <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">Nothing upcoming</h2>
+            <p className="text-gray-400 dark:text-gray-500 text-sm">No tasks scheduled for the next 7 days</p>
           </div>
         )}
 

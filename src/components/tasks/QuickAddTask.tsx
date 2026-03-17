@@ -74,6 +74,7 @@ function QuickAddTask({ listId }: QuickAddTaskProps) {
 
   const tasks = useAppStore((s) => s.tasks[listId] ?? [])
   const setTasks = useAppStore((s) => s.setTasks)
+  const addToast = useAppStore((s) => s.addToast)
 
   // Cmd+N shortcut — listen for custom event dispatched by AppShell
   useEffect(() => {
@@ -158,6 +159,7 @@ function QuickAddTask({ listId }: QuickAddTaskProps) {
         listId,
         useAppStore.getState().tasks[listId].filter((t) => t.id !== tempId),
       )
+      addToast('Failed to create task', 'error')
     } finally {
       setIsSubmitting(false)
     }
@@ -205,11 +207,11 @@ function QuickAddTask({ listId }: QuickAddTaskProps) {
         useAppStore.getState().tasks[listId].map((t) => (t.id === tempId ? { ...created, metadata } : t)),
       )
     } catch {
-      // Revert optimistic add
       setTasks(
         listId,
         useAppStore.getState().tasks[listId].filter((t) => t.id !== tempId),
       )
+      addToast('Failed to create task', 'error')
     } finally {
       setIsSubmitting(false)
     }

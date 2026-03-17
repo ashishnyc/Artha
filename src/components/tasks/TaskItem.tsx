@@ -20,6 +20,7 @@ function TaskItem({ task, listId, sortable = false }: TaskItemProps) {
   const tasks = useAppStore((s) => s.tasks[listId] ?? [])
   const setSelectedTask = useAppStore((s) => s.setSelectedTask)
   const setCurrentFocusTask = useAppStore((s) => s.setCurrentFocusTask)
+  const addToast = useAppStore((s) => s.addToast)
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
@@ -48,6 +49,7 @@ function TaskItem({ task, listId, sortable = false }: TaskItemProps) {
       }
     } catch {
       setTasks(listId, tasks)
+      addToast('Failed to update task', 'error')
     }
   }
 
@@ -59,6 +61,7 @@ function TaskItem({ task, listId, sortable = false }: TaskItemProps) {
     } catch {
       setTasks(listId, tasks)
       setIsDeleting(false)
+      addToast('Failed to delete task', 'error')
     }
   }
 

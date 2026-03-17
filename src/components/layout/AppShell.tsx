@@ -6,6 +6,7 @@ import TaskDetailPanel from '../tasks/TaskDetailPanel'
 import AIChatDialog from '../AI/AIChatDialog'
 import SearchBar from '../Search/SearchBar'
 import ShortcutsHelp from '../ShortcutsHelp'
+import ToastContainer from '../ToastContainer'
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts'
 import { updateTask } from '../../api/tasks'
 import { parseNotes, serializeNotes } from '../../lib/task-metadata'
@@ -100,6 +101,7 @@ function AppShell() {
       <AIChatDialog isOpen={aiOpen} onClose={() => setAiOpen(false)} />
       <SearchBar isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
       <ShortcutsHelp isOpen={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
+      <ToastContainer />
     </div>
   )
 }
