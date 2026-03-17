@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import useAppStore from '../store/useAppStore'
 import { updateTask } from '../api/tasks'
 import { parseNotes, serializeNotes } from '../lib/task-metadata'
+import { incrementToday } from '../lib/pomo-stats'
+import FocusStats from '../components/Pomodoro/FocusStats'
 
 type Phase = 'WORK' | 'SHORT_BREAK' | 'LONG_BREAK'
 
@@ -76,6 +78,7 @@ function PomodoroPage() {
   const [completedWork, setCompletedWork] = useState(0)
   const [showSettings, setShowSettings] = useState(false)
   const [settingsDraft, setSettingsDraft] = useState<Durations>(loadDurations)
+  const [statsKey, setStatsKey] = useState(0)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const currentFocusTask = useAppStore((s) => s.currentFocusTask)
@@ -114,7 +117,9 @@ function PomodoroPage() {
       setCompletedWork(nextWork)
       nextPhase = nextWork % 4 === 0 ? 'LONG_BREAK' : 'SHORT_BREAK'
       incrementFocusTaskPomos()
+      incrementToday()
       fireNotification('Pomodoro complete! 🍅', 'Time for a break.')
+      setStatsKey((k) => k + 1) // refresh stats display
     } else {
       nextPhase = 'WORK'
       fireNotification("Break's over!", 'Time to focus.')
@@ -446,6 +451,9 @@ function PomodoroPage() {
             ? isRunning ? 'Stay focused!' : 'Ready to focus?'
             : isRunning ? 'Take a breather' : 'Break time!'}
         </p>
+
+        {/* Focus statistics */}
+        <FocusStats key={statsKey} />
 
       </div>
     </div>
