@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useAllListsTasks } from '../hooks/useAllListsTasks'
 import type { TaskWithList } from '../hooks/useAllListsTasks'
-import { completeTask, uncompleteTask, updateTask } from '../api/tasks'
-import { parseNotes, serializeNotes } from '../lib/task-metadata'
+import { completeTask, uncompleteTask, updateTask, createTask } from '../api/tasks'
+import { parseNotes, serializeNotes, defaultMetadata } from '../lib/task-metadata'
 import useAppStore from '../store/useAppStore'
 import type { TaskMetadata } from '../types'
 
@@ -127,6 +127,45 @@ function MatrixCard({
   )
 }
 
+function QuadrantQuickAdd({ priority, quadrant }: { priority: Priority; quadrant: Quadrant }) {
+  const [title, setTitle] = useState('')
+  const taskLists = useAppStore((s) => s.taskLists)
+  const setTasks = useAppStore((s) => s.setTasks)
+
+  async function handleSubmit() {
+    const trimmed = title.trim()
+    if (!trimmed || taskLists.length === 0) return
+    const listId = taskLists[0].id
+    const metadata = { ...defaultMetadata(), priority }
+    const notes = serializeNotes('', metadata)
+    setTitle('')
+    try {
+      const created = await createTask(listId, { title: trimmed, notes })
+      const stored = useAppStore.getState().tasks[listId] ?? []
+      setTasks(listId, [...stored, { ...created, metadata }])
+    } catch {
+      // silently fail — task list will resync on next load
+    }
+  }
+
+  return (
+    <div className={`px-3 py-2 shrink-0 border-t ${quadrant.border}`}>
+      <input
+        type="text"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') handleSubmit()
+          if (e.key === 'Escape') setTitle('')
+        }}
+        placeholder="+ Add task…"
+        className={`w-full text-xs px-2 py-1.5 rounded-lg bg-white border ${quadrant.border} placeholder-gray-300 text-gray-700 outline-none focus:border-indigo-300`}
+        data-testid={`quickadd-${priority}`}
+      />
+    </div>
+  )
+}
+
 function MatrixPage() {
   const { tasks, loading } = useAllListsTasks()
   const setTasks = useAppStore((s) => s.setTasks)
@@ -223,6 +262,9 @@ function MatrixPage() {
                     ))
                   )}
                 </div>
+
+                {/* Quick add */}
+                <QuadrantQuickAdd priority={quadrant.id} quadrant={quadrant} />
 
                 {/* Task count */}
                 <div className={`px-4 py-1.5 shrink-0 ${quadrant.headerBg} border-t ${quadrant.border}`}>
