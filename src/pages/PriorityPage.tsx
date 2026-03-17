@@ -18,7 +18,7 @@ function PriorityPage() {
 
   return (
     <div className="flex flex-col h-full overflow-y-auto" data-testid="priority-page">
-      <div className="max-w-2xl mx-auto w-full px-4 py-6">
+      <div className="w-full px-4 md:px-6 py-6">
         <div className="flex items-center gap-2 mb-6">
           <svg className="w-5 h-5 text-red-500" viewBox="0 0 24 24" fill="currentColor">
             <path d="M5 3v18M5 3h11.5a1 1 0 0 1 .8 1.6L14 9l3.3 4.4a1 1 0 0 1-.8 1.6H5" />

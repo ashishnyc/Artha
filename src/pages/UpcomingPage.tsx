@@ -128,7 +128,7 @@ function UpcomingPage() {
 
   return (
     <div className="flex flex-col h-full overflow-y-auto" data-testid="upcoming-page">
-      <div className="max-w-2xl mx-auto w-full px-4 py-6">
+      <div className="w-full px-4 md:px-6 py-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Upcoming</h1>
 
         {loading && <TaskSkeleton count={5} />}

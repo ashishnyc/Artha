@@ -18,7 +18,7 @@ function TagPage() {
 
   return (
     <div className="flex flex-col h-full overflow-y-auto" data-testid="tag-page">
-      <div className="max-w-2xl mx-auto w-full px-4 py-6">
+      <div className="w-full px-4 md:px-6 py-6">
         <div className="flex items-center gap-2 mb-6">
           <span className="text-xs px-2 py-0.5 bg-indigo-100 text-indigo-600 rounded-full border border-indigo-200 font-medium">
             #{tag}
