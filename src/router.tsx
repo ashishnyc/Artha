@@ -6,6 +6,7 @@ import TodayPage from './pages/TodayPage'
 import UpcomingPage from './pages/UpcomingPage'
 import TagPage from './pages/TagPage'
 import PriorityPage from './pages/PriorityPage'
+import CalendarPage from './pages/CalendarPage'
 import LoginPage from './pages/LoginPage'
 
 const router = createBrowserRouter([
@@ -34,7 +35,7 @@ const router = createBrowserRouter([
           },
           {
             path: 'calendar',
-            element: <div>Calendar</div>,
+            element: <CalendarPage />,
           },
           {
             path: 'list/:listId',
