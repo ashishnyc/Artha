@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import useAppStore from '../store/useAppStore'
+import { updateTask } from '../api/tasks'
+import { parseNotes, serializeNotes } from '../lib/task-metadata'
 
 type Phase = 'WORK' | 'SHORT_BREAK' | 'LONG_BREAK'
 
@@ -78,6 +80,11 @@ function PomodoroPage() {
 
   const currentFocusTask = useAppStore((s) => s.currentFocusTask)
   const setCurrentFocusTask = useAppStore((s) => s.setCurrentFocusTask)
+  const focusTaskData = useAppStore((s) =>
+    s.currentFocusTask
+      ? (s.tasks[s.currentFocusTask.listId] ?? []).find((t) => t.id === s.currentFocusTask!.taskId)
+      : null
+  )
 
   const totalTime = getPhaseDuration(phase, durations)
   const progress = totalTime > 0 ? 1 - timeLeft / totalTime : 1
@@ -106,8 +113,11 @@ function PomodoroPage() {
       nextWork = completedWork + 1
       setCompletedWork(nextWork)
       nextPhase = nextWork % 4 === 0 ? 'LONG_BREAK' : 'SHORT_BREAK'
+      incrementFocusTaskPomos()
+      fireNotification('Pomodoro complete! 🍅', 'Time for a break.')
     } else {
       nextPhase = 'WORK'
+      fireNotification("Break's over!", 'Time to focus.')
     }
 
     setPhase(nextPhase)
@@ -126,7 +136,45 @@ function PomodoroPage() {
     return () => { document.title = 'Artha' }
   }, [timeLeft, isRunning, phase])
 
-  function handleStart() { setIsRunning(true) }
+  // Request notification permission
+  function requestNotificationPermission() {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
+  }
+
+  function fireNotification(title: string, body?: string) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(title, { body, icon: '/favicon.ico' })
+    }
+  }
+
+  // Increment completedPomos on focus task after a WORK session
+  async function incrementFocusTaskPomos() {
+    const focusTask = useAppStore.getState().currentFocusTask
+    if (!focusTask) return
+    const storeTasks = useAppStore.getState().tasks[focusTask.listId] ?? []
+    const task = storeTasks.find((t) => t.id === focusTask.taskId)
+    if (!task) return
+
+    const { userNotes, metadata } = parseNotes(task.notes ?? '')
+    const newMetadata = { ...metadata, completedPomos: metadata.completedPomos + 1 }
+    const newNotes = serializeNotes(userNotes, newMetadata)
+
+    useAppStore.getState().setTasks(focusTask.listId,
+      storeTasks.map((t) => t.id === focusTask.taskId ? { ...t, notes: newNotes, metadata: newMetadata } : t)
+    )
+    try {
+      await updateTask(focusTask.listId, focusTask.taskId, { notes: newNotes })
+    } catch {
+      useAppStore.getState().setTasks(focusTask.listId, storeTasks)
+    }
+  }
+
+  function handleStart() {
+    requestNotificationPermission()
+    setIsRunning(true)
+  }
   function handlePause() { setIsRunning(false) }
   function handleReset() {
     setIsRunning(false)
@@ -216,9 +264,16 @@ function PomodoroPage() {
             className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-sm"
             data-testid="focus-task"
           >
-            <div>
+            <div className="min-w-0">
               <p className="text-xs text-gray-400 mb-0.5">Focusing on</p>
               <p className="text-sm font-medium text-gray-800 truncate max-w-[260px]">{currentFocusTask.title}</p>
+              {focusTaskData && (
+                <p className="text-xs text-gray-400 mt-0.5">
+                  🍅 {focusTaskData.metadata.completedPomos}
+                  {focusTaskData.metadata.estimatedPomos > 0 && ` / ${focusTaskData.metadata.estimatedPomos}`}
+                  {' '}pomodoro{focusTaskData.metadata.completedPomos !== 1 ? 's' : ''}
+                </p>
+              )}
             </div>
             <button
               onClick={() => setCurrentFocusTask(null)}
