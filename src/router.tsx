@@ -8,6 +8,7 @@ import TagPage from './pages/TagPage'
 import PriorityPage from './pages/PriorityPage'
 import CalendarPage from './pages/CalendarPage'
 import PomodoroPage from './pages/PomodoroPage'
+import MatrixPage from './pages/MatrixPage'
 import LoginPage from './pages/LoginPage'
 
 const router = createBrowserRouter([
@@ -57,6 +58,10 @@ const router = createBrowserRouter([
           {
             path: 'pomodoro',
             element: <PomodoroPage />,
+          },
+          {
+            path: 'matrix',
+            element: <MatrixPage />,
           },
         ],
       },
