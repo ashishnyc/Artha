@@ -75,16 +75,11 @@ function QuickAddTask({ listId }: QuickAddTaskProps) {
   const tasks = useAppStore((s) => s.tasks[listId] ?? [])
   const setTasks = useAppStore((s) => s.setTasks)
 
-  // Ctrl+N / Cmd+N shortcut to focus input
+  // Cmd+N shortcut — listen for custom event dispatched by AppShell
   useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-        e.preventDefault()
-        inputRef.current?.focus()
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    function handleQuickAdd() { inputRef.current?.focus() }
+    window.addEventListener('artha:quickadd', handleQuickAdd)
+    return () => window.removeEventListener('artha:quickadd', handleQuickAdd)
   }, [])
 
   // Close pickers on outside click
