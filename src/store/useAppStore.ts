@@ -1,6 +1,12 @@
 import { create } from 'zustand'
 import type { TaskList, Task, GoogleUser } from '../types'
 
+export interface Toast {
+  id: string
+  message: string
+  type: 'success' | 'error'
+}
+
 interface AuthState {
   token: string | null
   user: GoogleUser | null
@@ -30,6 +36,7 @@ interface AppStore {
   loading: LoadingState
   selectedTask: SelectedTask | null
   currentFocusTask: FocusTask | null
+  toasts: Toast[]
 
   // Auth slice actions
   setToken: (token: string) => void
@@ -48,6 +55,10 @@ interface AppStore {
 
   // Focus actions
   setCurrentFocusTask: (task: FocusTask | null) => void
+
+  // Toast actions
+  addToast: (message: string, type: Toast['type']) => void
+  removeToast: (id: string) => void
 }
 
 const useAppStore = create<AppStore>((set) => ({
@@ -63,6 +74,7 @@ const useAppStore = create<AppStore>((set) => ({
   },
   selectedTask: null,
   currentFocusTask: null,
+  toasts: [],
 
   setToken: (token) => set((state) => ({ auth: { ...state.auth, token } })),
 
@@ -90,6 +102,17 @@ const useAppStore = create<AppStore>((set) => ({
   clearSelectedTask: () => set({ selectedTask: null }),
 
   setCurrentFocusTask: (task) => set({ currentFocusTask: task }),
+
+  addToast: (message, type) => {
+    const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    set((state) => ({ toasts: [...state.toasts, { id, message, type }] }))
+    setTimeout(() => {
+      useAppStore.getState().removeToast(id)
+    }, 3000)
+  },
+
+  removeToast: (id) =>
+    set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
 }))
 
 export default useAppStore
