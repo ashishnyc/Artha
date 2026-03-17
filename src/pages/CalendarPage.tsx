@@ -130,9 +130,10 @@ function WeekView({
 
   return (
     <div
-      className="flex flex-col flex-1 overflow-hidden border border-gray-200 rounded-xl"
+      className="flex flex-col flex-1 overflow-hidden border border-gray-200 rounded-xl overflow-x-auto"
       data-testid="week-view"
     >
+    <div className="min-w-[600px] flex flex-col flex-1 overflow-hidden">
       {/* Day column headers */}
       <div
         className="grid border-b border-gray-200 shrink-0"
@@ -210,6 +211,7 @@ function WeekView({
           </div>
         ))}
       </div>
+    </div>
     </div>
   )
 }
@@ -360,9 +362,9 @@ function CalendarPage() {
 
         {/* Month view */}
         {view === 'month' && (
-          <div data-testid="month-view">
+          <div className="overflow-x-auto" data-testid="month-view">
             {/* Weekday headers */}
-            <div className="grid grid-cols-7 mb-1" data-testid="weekday-headers">
+            <div className="grid grid-cols-7 mb-1 min-w-[400px]" data-testid="weekday-headers">
               {WEEKDAYS.map((wd) => (
                 <div key={wd} className="text-center text-xs font-semibold text-gray-400 uppercase tracking-wide py-2">
                   {wd}
@@ -371,7 +373,7 @@ function CalendarPage() {
             </div>
 
             {/* Day grid */}
-            <div className="grid grid-cols-7 border-l border-t border-gray-100" data-testid="calendar-grid">
+            <div className="grid grid-cols-7 border-l border-t border-gray-100 min-w-[400px]" data-testid="calendar-grid">
               {days.map((day) => {
                 const dayKey = format(day, 'yyyy-MM-dd')
                 const dayTasks = getTasksForDay(tasks, day)
