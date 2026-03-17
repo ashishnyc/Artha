@@ -103,6 +103,7 @@ function Sidebar() {
         <NavItem to="/inbox" label="Inbox" />
         <NavItem to="/today" label="Today" />
         <NavItem to="/upcoming" label="Upcoming" />
+        <NavItem to="/calendar" label="Calendar" />
         <NavItem to="/priority" label="High Priority" />
       </nav>
 
