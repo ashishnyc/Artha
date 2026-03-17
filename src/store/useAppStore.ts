@@ -16,6 +16,12 @@ interface SelectedTask {
   listId: string
 }
 
+interface FocusTask {
+  taskId: string
+  listId: string
+  title: string
+}
+
 interface AppStore {
   // Data
   taskLists: TaskList[]
@@ -23,6 +29,7 @@ interface AppStore {
   auth: AuthState
   loading: LoadingState
   selectedTask: SelectedTask | null
+  currentFocusTask: FocusTask | null
 
   // Auth slice actions
   setToken: (token: string) => void
@@ -38,6 +45,9 @@ interface AppStore {
   // Selection actions
   setSelectedTask: (selected: SelectedTask) => void
   clearSelectedTask: () => void
+
+  // Focus actions
+  setCurrentFocusTask: (task: FocusTask | null) => void
 }
 
 const useAppStore = create<AppStore>((set) => ({
@@ -52,6 +62,7 @@ const useAppStore = create<AppStore>((set) => ({
     tasks: {},
   },
   selectedTask: null,
+  currentFocusTask: null,
 
   setToken: (token) => set((state) => ({ auth: { ...state.auth, token } })),
 
@@ -77,6 +88,8 @@ const useAppStore = create<AppStore>((set) => ({
 
   setSelectedTask: (selected) => set({ selectedTask: selected }),
   clearSelectedTask: () => set({ selectedTask: null }),
+
+  setCurrentFocusTask: (task) => set({ currentFocusTask: task }),
 }))
 
 export default useAppStore

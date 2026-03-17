@@ -105,6 +105,7 @@ function Sidebar() {
         <NavItem to="/upcoming" label="Upcoming" />
         <NavItem to="/calendar" label="Calendar" />
         <NavItem to="/priority" label="High Priority" />
+        <NavItem to="/pomodoro" label="Pomodoro" />
       </nav>
 
       {/* User task lists */}

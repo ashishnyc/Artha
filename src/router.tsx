@@ -7,6 +7,7 @@ import UpcomingPage from './pages/UpcomingPage'
 import TagPage from './pages/TagPage'
 import PriorityPage from './pages/PriorityPage'
 import CalendarPage from './pages/CalendarPage'
+import PomodoroPage from './pages/PomodoroPage'
 import LoginPage from './pages/LoginPage'
 
 const router = createBrowserRouter([
@@ -52,6 +53,10 @@ const router = createBrowserRouter([
           {
             path: 'priority',
             element: <PriorityPage />,
+          },
+          {
+            path: 'pomodoro',
+            element: <PomodoroPage />,
           },
         ],
       },
