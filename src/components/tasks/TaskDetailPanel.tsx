@@ -5,6 +5,9 @@ import { updateTask, createTask, deleteTask, completeTask, uncompleteTask } from
 import { parseNotes, serializeNotes } from '../../lib/task-metadata'
 import type { TaskMetadata } from '../../types'
 import TagInput from './TagInput'
+import { callClaude } from '../../lib/claude-client'
+import { TASK_BREAKDOWN_SYSTEM_PROMPT } from '../../lib/ai-prompts'
+import { parseAIResponse } from '../../lib/ai-types'
 
 type Priority = TaskMetadata['priority']
 
@@ -83,13 +86,29 @@ function MoveToListRow({ task, currentListId }: { task: import('../../types').Ta
   )
 }
 
-function SubtasksSection({ taskId, listId }: { taskId: string; listId: string }) {
+function SubtasksSection({
+  taskId,
+  listId,
+  taskTitle,
+  taskNotes,
+}: {
+  taskId: string
+  listId: string
+  taskTitle: string
+  taskNotes: string
+}) {
   const allTasks = useAppStore((s) => s.tasks[listId] ?? [])
   const setTasks = useAppStore((s) => s.setTasks)
   const subtasks = allTasks.filter((t) => t.parent === taskId)
   const [addingTitle, setAddingTitle] = useState('')
   const [isAdding, setIsAdding] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // AI breakdown state
+  const [isBreaking, setIsBreaking] = useState(false)
+  const [breakError, setBreakError] = useState<string | null>(null)
+  const [suggestions, setSuggestions] = useState<{ title: string; checked: boolean }[]>([])
+  const [isConfirming, setIsConfirming] = useState(false)
 
   useEffect(() => {
     if (isAdding) inputRef.current?.focus()
@@ -131,6 +150,38 @@ function SubtasksSection({ taskId, listId }: { taskId: string; listId: string })
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') { e.preventDefault(); handleAddSubtask() }
     if (e.key === 'Escape') { setIsAdding(false); setAddingTitle('') }
+  }
+
+  async function handleBreakDown() {
+    setIsBreaking(true)
+    setBreakError(null)
+    setSuggestions([])
+    try {
+      const { userNotes } = parseNotes(taskNotes)
+      const userMessage = `Task: ${taskTitle}${userNotes ? `\nDetails: ${userNotes}` : ''}`
+      const text = await callClaude([{ role: 'user', content: userMessage }], TASK_BREAKDOWN_SYSTEM_PROMPT)
+      const parsed = parseAIResponse(text)
+      setSuggestions(parsed.map((s) => ({ title: s.title, checked: true })))
+    } catch (err) {
+      setBreakError(err instanceof Error ? err.message : 'Failed to get suggestions')
+    } finally {
+      setIsBreaking(false)
+    }
+  }
+
+  async function handleConfirm() {
+    const selected = suggestions.filter((s) => s.checked)
+    if (!selected.length) return
+    setIsConfirming(true)
+    try {
+      const created = await Promise.all(
+        selected.map((s) => createTask(listId, { title: s.title, parent: taskId }))
+      )
+      setTasks(listId, [...useAppStore.getState().tasks[listId] ?? [], ...created])
+      setSuggestions([])
+    } finally {
+      setIsConfirming(false)
+    }
   }
 
   return (
@@ -197,17 +248,81 @@ function SubtasksSection({ taskId, listId }: { taskId: string; listId: string })
           data-testid="subtask-input"
         />
       ) : (
-        <button
-          type="button"
-          onClick={() => setIsAdding(true)}
-          className="flex items-center gap-1 text-xs text-gray-400 hover:text-indigo-500 transition-colors w-fit"
-          data-testid="add-subtask-button"
-        >
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Add subtask
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setIsAdding(true)}
+            className="flex items-center gap-1 text-xs text-gray-400 hover:text-indigo-500 transition-colors"
+            data-testid="add-subtask-button"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Add subtask
+          </button>
+
+          <button
+            type="button"
+            onClick={handleBreakDown}
+            disabled={isBreaking}
+            className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-600 disabled:opacity-50 transition-colors"
+            data-testid="break-down-ai-button"
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" />
+            </svg>
+            {isBreaking ? 'Thinking…' : 'Break down with AI'}
+          </button>
+        </div>
+      )}
+
+      {breakError && (
+        <p className="text-xs text-red-500" data-testid="break-down-error">{breakError}</p>
+      )}
+
+      {suggestions.length > 0 && (
+        <div className="border border-indigo-100 rounded-lg overflow-hidden" data-testid="breakdown-suggestions">
+          <div className="px-3 py-2 bg-indigo-50 border-b border-indigo-100">
+            <span className="text-xs font-medium text-indigo-700">AI suggested subtasks</span>
+          </div>
+          <ul className="divide-y divide-gray-100">
+            {suggestions.map((s, i) => (
+              <li key={i} className="flex items-center gap-2 px-3 py-2">
+                <input
+                  type="checkbox"
+                  checked={s.checked}
+                  onChange={(e) =>
+                    setSuggestions((prev) =>
+                      prev.map((item, idx) => (idx === i ? { ...item, checked: e.target.checked } : item))
+                    )
+                  }
+                  className="w-3.5 h-3.5 accent-indigo-500"
+                  data-testid={`suggestion-checkbox-${i}`}
+                />
+                <span className="flex-1 text-xs text-gray-700">{s.title}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="flex items-center justify-end gap-2 px-3 py-2 bg-gray-50 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={() => setSuggestions([])}
+              className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+              data-testid="dismiss-suggestions"
+            >
+              Dismiss
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirm}
+              disabled={isConfirming || suggestions.every((s) => !s.checked)}
+              className="text-xs px-3 py-1 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+              data-testid="confirm-subtasks"
+            >
+              {isConfirming ? 'Adding…' : `Add selected (${suggestions.filter((s) => s.checked).length})`}
+            </button>
+          </div>
+        </div>
       )}
     </div>
   )
@@ -511,7 +626,12 @@ function TaskDetailPanel() {
               <MoveToListRow task={task} currentListId={selectedTask!.listId} />
 
               {/* Subtasks */}
-              <SubtasksSection taskId={task.id} listId={selectedTask!.listId} />
+              <SubtasksSection
+                taskId={task.id}
+                listId={selectedTask!.listId}
+                taskTitle={task.title}
+                taskNotes={task.notes ?? ''}
+              />
 
               {/* Priority */}
               <div ref={priorityPickerRef} className="relative">
