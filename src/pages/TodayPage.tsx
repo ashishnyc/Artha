@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { isToday, isPast, parseISO, format } from 'date-fns'
 import { useAllListsTasks } from '../hooks/useAllListsTasks'
 import type { TaskWithList } from '../hooks/useAllListsTasks'
 import TaskItem from '../components/tasks/TaskItem'
+import DailyPlannerDialog from '../components/AI/DailyPlannerDialog'
 
 function isOverdue(task: TaskWithList): boolean {
   if (!task.due || task.status === 'completed') return false
@@ -16,6 +18,7 @@ function isDueToday(task: TaskWithList): boolean {
 
 function TodayPage() {
   const { tasks, loading } = useAllListsTasks()
+  const [plannerOpen, setPlannerOpen] = useState(false)
 
   if (loading) {
     return (
@@ -40,7 +43,21 @@ function TodayPage() {
   return (
     <div className="flex flex-col h-full overflow-y-auto" data-testid="today-page">
       <div className="max-w-2xl mx-auto w-full px-4 py-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">Today</h1>
+        <div className="flex items-center justify-between mb-1">
+          <h1 className="text-2xl font-bold text-gray-900">Today</h1>
+          {(overdue.length > 0 || todayTasks.length > 0) && (
+            <button
+              onClick={() => setPlannerOpen(true)}
+              className="flex items-center gap-1.5 text-sm px-3 py-1.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors"
+              data-testid="plan-my-day-button"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" />
+              </svg>
+              Plan my day
+            </button>
+          )}
+        </div>
         <p className="text-sm text-gray-400 mb-6">{format(new Date(), 'EEEE, MMMM d')}</p>
 
         {!hasAnything && (
@@ -93,6 +110,12 @@ function TodayPage() {
           </section>
         ))}
       </div>
+
+      <DailyPlannerDialog
+        isOpen={plannerOpen}
+        onClose={() => setPlannerOpen(false)}
+        tasks={[...overdue, ...todayTasks]}
+      />
     </div>
   )
 }
