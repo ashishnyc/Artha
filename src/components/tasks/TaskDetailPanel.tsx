@@ -516,14 +516,14 @@ function TaskDetailPanel() {
 
       {/* Panel */}
       <div
-        className={`fixed top-0 right-0 h-full w-96 bg-white shadow-xl z-30 flex flex-col transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 h-full w-96 bg-white dark:bg-gray-900 shadow-xl z-30 flex flex-col transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
         data-testid="task-detail-panel"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h2 className="text-sm font-semibold text-gray-700">Task Detail</h2>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Task Detail</h2>
           <button
             onClick={clearSelectedTask}
             aria-label="Close task detail"
@@ -548,7 +548,7 @@ function TaskDetailPanel() {
                 onChange={(e) => setTitleValue(e.target.value)}
                 onBlur={handleTitleSave}
                 onKeyDown={handleTitleKeyDown}
-                className="w-full text-base font-semibold text-gray-800 outline-none border-b-2 border-transparent focus:border-indigo-400 pb-1 transition-colors bg-transparent"
+                className="w-full text-base font-semibold text-gray-800 dark:text-gray-100 outline-none border-b-2 border-transparent focus:border-indigo-400 pb-1 transition-colors bg-transparent"
                 data-testid="task-detail-title"
                 aria-label="Task title"
               />
@@ -560,7 +560,7 @@ function TaskDetailPanel() {
                 onBlur={handleDescSave}
                 placeholder="Add a description…"
                 rows={4}
-                className="w-full text-sm text-gray-700 placeholder-gray-400 outline-none border border-transparent focus:border-indigo-300 rounded-md px-2 py-1.5 resize-none transition-colors bg-gray-50 focus:bg-white"
+                className="w-full text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-600 outline-none border border-transparent focus:border-indigo-300 rounded-md px-2 py-1.5 resize-none transition-colors bg-gray-50 dark:bg-gray-800 focus:bg-white dark:focus:bg-gray-750"
                 data-testid="task-detail-description"
                 aria-label="Task description"
               />

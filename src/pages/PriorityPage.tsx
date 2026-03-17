@@ -23,7 +23,7 @@ function PriorityPage() {
           <svg className="w-5 h-5 text-red-500" viewBox="0 0 24 24" fill="currentColor">
             <path d="M5 3v18M5 3h11.5a1 1 0 0 1 .8 1.6L14 9l3.3 4.4a1 1 0 0 1-.8 1.6H5" />
           </svg>
-          <h1 className="text-2xl font-bold text-gray-900">High Priority</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">High Priority</h1>
           <span className="text-sm text-gray-400 ml-1">{highPriority.length} task{highPriority.length !== 1 ? 's' : ''}</span>
         </div>
 

@@ -91,11 +91,11 @@ export default function SearchBar({
 
       {/* Dialog */}
       <div
-        className="relative z-10 w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden"
+        className="relative z-10 w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden"
         data-testid="search-dialog"
       >
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 dark:border-gray-800">
           <svg className="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
@@ -106,7 +106,7 @@ export default function SearchBar({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Escape' && onClose()}
-            className="flex-1 text-sm text-gray-800 placeholder-gray-400 outline-none"
+            className="flex-1 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-600 outline-none bg-transparent"
             data-testid="search-input"
           />
           {query && (
@@ -130,14 +130,14 @@ export default function SearchBar({
                   <li key={`${r.listId}-${r.taskId}`}>
                     <button
                       onClick={() => handleSelect(r)}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-left transition-colors"
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 text-left transition-colors"
                       data-testid="search-result"
                     >
                       <svg className="w-4 h-4 text-gray-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                       </svg>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-800 truncate">{r.title}</p>
+                        <p className="text-sm text-gray-800 dark:text-gray-200 truncate">{r.title}</p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-xs text-gray-400 truncate">{r.listTitle}</span>
                           {r.due && (

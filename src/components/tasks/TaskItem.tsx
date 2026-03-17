@@ -69,7 +69,7 @@ function TaskItem({ task, listId, sortable = false }: TaskItemProps) {
     return (
       <span
         className={`text-xs px-2 py-0.5 rounded-full ${
-          overdue ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'
+          overdue ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
         }`}
         data-testid="due-badge"
       >
@@ -82,8 +82,8 @@ function TaskItem({ task, listId, sortable = false }: TaskItemProps) {
     <li
       ref={setNodeRef}
       style={style}
-      className={`group flex items-center gap-3 px-4 py-3 hover:bg-gray-50 rounded-lg transition-colors ${
-        isDragging ? 'opacity-50 bg-gray-50 shadow-md z-10' : ''
+      className={`group flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-colors ${
+        isDragging ? 'opacity-50 bg-gray-50 dark:bg-gray-800 shadow-md z-10' : ''
       }`}
       data-testid="task-item"
     >
@@ -129,7 +129,7 @@ function TaskItem({ task, listId, sortable = false }: TaskItemProps) {
 
       {/* Title */}
       <span
-        className={`flex-1 text-sm cursor-pointer ${isCompleted ? 'line-through text-gray-400' : 'text-gray-800 hover:text-indigo-600'}`}
+        className={`flex-1 text-sm cursor-pointer ${isCompleted ? 'line-through text-gray-400 dark:text-gray-600' : 'text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400'}`}
         onClick={() => setSelectedTask({ taskId: task.id, listId })}
         data-testid="task-title"
       >

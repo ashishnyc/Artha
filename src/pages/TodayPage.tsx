@@ -44,7 +44,7 @@ function TodayPage() {
     <div className="flex flex-col h-full overflow-y-auto" data-testid="today-page">
       <div className="max-w-2xl mx-auto w-full px-4 py-6">
         <div className="flex items-center justify-between mb-1">
-          <h1 className="text-2xl font-bold text-gray-900">Today</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Today</h1>
           {(overdue.length > 0 || todayTasks.length > 0) && (
             <button
               onClick={() => setPlannerOpen(true)}

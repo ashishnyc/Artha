@@ -82,11 +82,11 @@ function TaskListPage() {
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">{listTitle}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{listTitle}</h1>
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as SortOption)}
-              className="text-xs border border-gray-200 rounded-md px-2 py-1 text-gray-500 bg-gray-50 outline-none focus:border-indigo-300 transition-colors"
+              className="text-xs border border-gray-200 dark:border-gray-700 rounded-md px-2 py-1 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 outline-none focus:border-indigo-300 transition-colors"
               data-testid="sort-select"
             >
               <option value="default">Default order</option>
@@ -126,7 +126,7 @@ function TaskListPage() {
                 <div className="mt-6" data-testid="completed-section">
                   <button
                     onClick={() => setCompletedOpen((o) => !o)}
-                    className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-2"
+                    className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 mb-2"
                     data-testid="completed-toggle"
                   >
                     <svg

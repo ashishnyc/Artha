@@ -81,7 +81,7 @@ function DayPopover({
   return (
     <div
       ref={ref}
-      className="absolute top-full left-0 mt-1 z-30 w-72 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden"
+      className="absolute top-full left-0 mt-1 z-30 w-72 bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-200 overflow-hidden"
       data-testid="day-popover"
     >
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
