@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { format, isPast, parseISO } from 'date-fns'
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import type { Task } from '../../types'
 import { completeTask, uncompleteTask, deleteTask } from '../../api/tasks'
 import useAppStore from '../../store/useAppStore'
@@ -8,9 +10,10 @@ import useAppStore from '../../store/useAppStore'
 interface TaskItemProps {
   task: Task
   listId: string
+  sortable?: boolean
 }
 
-function TaskItem({ task, listId }: TaskItemProps) {
+function TaskItem({ task, listId, sortable = false }: TaskItemProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const navigate = useNavigate()
   const setTasks = useAppStore((s) => s.setTasks)
@@ -18,10 +21,18 @@ function TaskItem({ task, listId }: TaskItemProps) {
   const setSelectedTask = useAppStore((s) => s.setSelectedTask)
   const setCurrentFocusTask = useAppStore((s) => s.setCurrentFocusTask)
 
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: task.id,
+    disabled: !sortable,
+  })
+
+  const style = sortable
+    ? { transform: CSS.Transform.toString(transform), transition }
+    : undefined
+
   const isCompleted = task.status === 'completed'
 
   async function handleToggle() {
-    // Optimistic update
     const updated = tasks.map((t) =>
       t.id === task.id
         ? { ...t, status: isCompleted ? ('needsAction' as const) : ('completed' as const) }
@@ -36,19 +47,16 @@ function TaskItem({ task, listId }: TaskItemProps) {
         await completeTask(listId, task.id)
       }
     } catch {
-      // Revert on failure
       setTasks(listId, tasks)
     }
   }
 
   async function handleDelete() {
     setIsDeleting(true)
-    // Optimistic remove
     setTasks(listId, tasks.filter((t) => t.id !== task.id))
     try {
       await deleteTask(listId, task.id)
     } catch {
-      // Revert on failure
       setTasks(listId, tasks)
       setIsDeleting(false)
     }
@@ -72,9 +80,33 @@ function TaskItem({ task, listId }: TaskItemProps) {
 
   return (
     <li
-      className="group flex items-center gap-3 px-4 py-3 hover:bg-gray-50 rounded-lg transition-colors"
+      ref={setNodeRef}
+      style={style}
+      className={`group flex items-center gap-3 px-4 py-3 hover:bg-gray-50 rounded-lg transition-colors ${
+        isDragging ? 'opacity-50 bg-gray-50 shadow-md z-10' : ''
+      }`}
       data-testid="task-item"
     >
+      {/* Drag handle — only shown in default sort mode */}
+      {sortable && (
+        <button
+          {...attributes}
+          {...listeners}
+          aria-label="Drag to reorder"
+          className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing shrink-0 transition-opacity -ml-1"
+          data-testid="drag-handle"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="9" cy="7" r="1.5" />
+            <circle cx="15" cy="7" r="1.5" />
+            <circle cx="9" cy="12" r="1.5" />
+            <circle cx="15" cy="12" r="1.5" />
+            <circle cx="9" cy="17" r="1.5" />
+            <circle cx="15" cy="17" r="1.5" />
+          </svg>
+        </button>
+      )}
+
       {/* Checkbox */}
       <button
         role="checkbox"

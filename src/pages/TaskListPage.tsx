@@ -1,10 +1,20 @@
 import { useState, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
 import { useTasks } from '../hooks/useTasks'
 import useAppStore from '../store/useAppStore'
 import TaskItem from '../components/tasks/TaskItem'
 import EmptyState from '../components/tasks/EmptyState'
 import QuickAddTask from '../components/tasks/QuickAddTask'
+import { moveTask } from '../api/tasks'
 import type { Task } from '../types'
 
 type SortOption = 'default' | 'priority'
@@ -23,8 +33,13 @@ function TaskListPage() {
   const { listId } = useParams<{ listId: string }>()
   const { tasks, loading } = useTasks(listId ?? null)
   const taskLists = useAppStore((s) => s.taskLists)
+  const setTasks = useAppStore((s) => s.setTasks)
   const [completedOpen, setCompletedOpen] = useState(false)
   const [sort, setSort] = useState<SortOption>('default')
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  )
 
   const listTitle = taskLists.find((l) => l.id === listId)?.title ?? 'List'
   const pending = useMemo(() => {
@@ -32,6 +47,27 @@ function TaskListPage() {
     return sort === 'priority' ? sortByPriority(p) : p
   }, [tasks, sort])
   const completed = tasks.filter((t) => t.status === 'completed')
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id || !listId) return
+
+    const oldIndex = pending.findIndex((t) => t.id === active.id)
+    const newIndex = pending.findIndex((t) => t.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const reordered = arrayMove(pending, oldIndex, newIndex)
+    const allTasks = useAppStore.getState().tasks[listId] ?? []
+    const completedTasks = allTasks.filter((t) => t.status === 'completed')
+    setTasks(listId, [...reordered, ...completedTasks])
+
+    const previousId = newIndex > 0 ? reordered[newIndex - 1].id : undefined
+    try {
+      await moveTask(listId, String(active.id), undefined, previousId)
+    } catch {
+      setTasks(listId, allTasks)
+    }
+  }
 
   if (loading) {
     return (
@@ -62,12 +98,28 @@ function TaskListPage() {
             <EmptyState />
           ) : (
             <>
-              {/* Pending tasks */}
-              <ul className="space-y-0.5" data-testid="pending-tasks">
-                {pending.map((task) => (
-                  <TaskItem key={task.id} task={task} listId={listId!} />
-                ))}
-              </ul>
+              {/* Pending tasks — sortable in default order */}
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={pending.map((t) => t.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <ul className="space-y-0.5" data-testid="pending-tasks">
+                    {pending.map((task) => (
+                      <TaskItem
+                        key={task.id}
+                        task={task}
+                        listId={listId!}
+                        sortable={sort === 'default'}
+                      />
+                    ))}
+                  </ul>
+                </SortableContext>
+              </DndContext>
 
               {/* Completed tasks — collapsible */}
               {completed.length > 0 && (
