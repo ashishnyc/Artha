@@ -16,6 +16,9 @@ const parsed = parseHashToken()
 if (parsed) {
   useAppStore.getState().setToken(parsed.accessToken)
   window.history.replaceState(null, '', window.location.pathname + window.location.search)
+} else {
+  const saved = localStorage.getItem('artha-token')
+  if (saved) useAppStore.getState().setToken(saved)
 }
 
 createRoot(document.getElementById('root')!).render(

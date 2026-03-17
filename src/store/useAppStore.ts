@@ -76,11 +76,17 @@ const useAppStore = create<AppStore>((set) => ({
   currentFocusTask: null,
   toasts: [],
 
-  setToken: (token) => set((state) => ({ auth: { ...state.auth, token } })),
+  setToken: (token) => {
+    localStorage.setItem('artha-token', token)
+    set((state) => ({ auth: { ...state.auth, token } }))
+  },
 
   setUser: (user) => set((state) => ({ auth: { ...state.auth, user } })),
 
-  logout: () => set({ auth: { token: null, user: null } }),
+  logout: () => {
+    localStorage.removeItem('artha-token')
+    set({ auth: { token: null, user: null } })
+  },
 
   setTaskLists: (taskLists) => set({ taskLists }),
 
