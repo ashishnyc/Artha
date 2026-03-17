@@ -95,7 +95,7 @@ function MatrixCard({
       draggable
       onDragStart={(e) => onDragStart(e, { taskId: task.id, listId: task.listId })}
       onClick={() => setSelectedTask({ taskId: task.id, listId: task.listId })}
-      className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-gray-100 shadow-sm cursor-pointer hover:shadow-md hover:border-gray-200 transition-all group"
+      className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-900 rounded-lg border border-gray-100 shadow-sm cursor-pointer hover:shadow-md hover:border-gray-200 transition-all group"
       data-testid="matrix-card"
     >
       <button
@@ -223,7 +223,7 @@ function MatrixPage() {
   return (
     <div className="flex flex-col h-full overflow-hidden" data-testid="matrix-page">
       <div className="max-w-5xl mx-auto w-full px-4 py-6 flex flex-col h-full">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">Eisenhower Matrix</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">Eisenhower Matrix</h1>
         <p className="text-sm text-gray-400 mb-4">Drag tasks between quadrants to reprioritize</p>
 
         <div className="grid grid-cols-2 grid-rows-2 gap-3 flex-1 min-h-0">

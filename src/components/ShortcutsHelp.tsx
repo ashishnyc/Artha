@@ -27,11 +27,11 @@ export default function ShortcutsHelp({
     >
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div
-        className="relative z-10 w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden"
+        className="relative z-10 w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden"
         data-testid="shortcuts-dialog"
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h2 className="text-sm font-semibold text-gray-800">Keyboard Shortcuts</h2>
+          <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Keyboard Shortcuts</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -47,11 +47,11 @@ export default function ShortcutsHelp({
             <>
               <kbd
                 key={`kbd-${combo}`}
-                className="text-xs font-mono bg-gray-100 text-gray-600 px-2 py-1 rounded text-center whitespace-nowrap self-center"
+                className="text-xs font-mono bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-2 py-1 rounded text-center whitespace-nowrap self-center"
               >
                 {combo}
               </kbd>
-              <span key={`desc-${combo}`} className="text-sm text-gray-600 self-center">
+              <span key={`desc-${combo}`} className="text-sm text-gray-600 dark:text-gray-400 self-center">
                 {description}
               </span>
             </>

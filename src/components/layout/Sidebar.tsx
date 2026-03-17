@@ -4,6 +4,7 @@ import { useTaskLists } from '../../hooks/useTaskLists'
 import { createTaskList } from '../../api/task-lists'
 import useAppStore from '../../store/useAppStore'
 import { useAllTags } from '../../hooks/useAllTags'
+import { useTheme, type Theme } from '../../hooks/useTheme'
 
 function NavItem({
   to,
@@ -35,9 +36,18 @@ function NavItem({
   )
 }
 
+const THEME_ICONS: Record<Theme, string> = {
+  light: '☀️',
+  dark: '🌙',
+  system: '💻',
+}
+
+const THEMES: Theme[] = ['light', 'dark', 'system']
+
 function Sidebar() {
   const { taskLists } = useTaskLists()
   const tasks = useAppStore((s) => s.tasks)
+  const { theme, setTheme } = useTheme()
   const setTaskLists = useAppStore((s) => s.setTaskLists)
   const user = useAppStore((s) => s.auth.user)
   const logout = useAppStore((s) => s.logout)
@@ -167,6 +177,25 @@ function Sidebar() {
       {/* Bottom section */}
       <div className={`px-3 pb-4 space-y-1${user ? '' : ' mt-auto'}`}>
         <NavItem to="/completed" label="Completed" />
+
+        {/* Theme toggle */}
+        <div className="flex items-center gap-1 px-4 py-1.5" data-testid="theme-toggle">
+          {THEMES.map((t) => (
+            <button
+              key={t}
+              onClick={() => setTheme(t)}
+              title={`${t} mode`}
+              className={`flex-1 text-xs py-1 rounded-md transition-colors ${
+                theme === t
+                  ? 'bg-gray-700 text-white'
+                  : 'text-gray-500 hover:text-gray-300'
+              }`}
+              data-testid={`theme-${t}`}
+            >
+              {THEME_ICONS[t]}
+            </button>
+          ))}
+        </div>
 
         {/* New List */}
         {isAddingList ? (

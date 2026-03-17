@@ -227,7 +227,7 @@ function QuickAddTask({ listId }: QuickAddTaskProps) {
 
   return (
     <div
-      className="sticky bottom-0 bg-white border-t border-gray-100 px-4 py-3"
+      className="sticky bottom-0 bg-white dark:bg-gray-950 border-t border-gray-100 dark:border-gray-800 px-4 py-3"
       data-testid="quick-add-task"
     >
       {/* AI preview card */}
@@ -281,10 +281,10 @@ function QuickAddTask({ listId }: QuickAddTaskProps) {
         <p className="max-w-2xl mx-auto mb-1 text-xs text-red-500" data-testid="ai-parse-error">{parseError}</p>
       )}
 
-      <div className={`flex items-center gap-2 max-w-2xl mx-auto bg-white border rounded-lg px-3 py-2 transition-all ${
+      <div className={`flex items-center gap-2 max-w-2xl mx-auto bg-white dark:bg-gray-900 border rounded-lg px-3 py-2 transition-all ${
         aiMode
           ? 'border-indigo-400 ring-1 ring-indigo-400'
-          : 'border-gray-200 focus-within:border-indigo-400 focus-within:ring-1 focus-within:ring-indigo-400'
+          : 'border-gray-200 dark:border-gray-700 focus-within:border-indigo-400 focus-within:ring-1 focus-within:ring-indigo-400'
       }`}>
         {/* AI toggle */}
         <button
@@ -308,7 +308,7 @@ function QuickAddTask({ listId }: QuickAddTaskProps) {
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={aiMode ? 'Describe a task in natural language… (Enter to parse)' : 'Add a task… (Ctrl+N)'}
-          className="flex-1 text-sm text-gray-800 placeholder-gray-400 outline-none bg-transparent"
+          className="flex-1 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-600 outline-none bg-transparent"
           data-testid="quick-add-input"
           aria-label="New task title"
           disabled={isParsing}

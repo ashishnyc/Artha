@@ -199,7 +199,7 @@ export default function AIChatDialog({ isOpen, onClose }: AIChatDialogProps) {
 
       {/* Dialog */}
       <div
-        className="relative z-10 w-full max-w-2xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[85vh]"
+        className="relative z-10 w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col max-h-[85vh]"
         data-testid="ai-chat-dialog"
       >
         {/* Header */}

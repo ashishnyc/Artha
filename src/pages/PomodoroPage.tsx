@@ -207,7 +207,7 @@ function PomodoroPage() {
 
         {/* Header */}
         <div className="w-full flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Pomodoro</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Pomodoro</h1>
           <button
             onClick={() => { setShowSettings((v) => !v); setSettingsDraft(durations) }}
             className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"

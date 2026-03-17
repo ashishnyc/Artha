@@ -81,7 +81,7 @@ function AppShell() {
   useKeyboardShortcuts(shortcuts())
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden" data-testid="app-shell">
+    <div className="flex h-screen w-screen overflow-hidden bg-white dark:bg-gray-950" data-testid="app-shell">
       <Sidebar />
       <MainContent />
       <TaskDetailPanel />
