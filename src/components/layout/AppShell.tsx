@@ -32,6 +32,7 @@ function AppShell() {
   const [aiOpen, setAiOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const navigate = useNavigate()
   const selectedTask = useAppStore((s) => s.selectedTask)
   const clearSelectedTask = useAppStore((s) => s.clearSelectedTask)
@@ -83,14 +84,29 @@ function AppShell() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-white dark:bg-gray-950" data-testid="app-shell">
-      <Sidebar />
+      {/* Mobile top bar */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-30 h-14 flex items-center px-4 bg-gray-900 border-b border-gray-700">
+        <button
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Open menu"
+          className="text-gray-300 hover:text-white transition-colors"
+          data-testid="mobile-menu-button"
+        >
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <span className="ml-4 text-white font-semibold">Artha</span>
+      </div>
+
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <MainContent />
       <TaskDetailPanel />
 
       {/* AI Chat FAB */}
       <button
         onClick={() => setAiOpen(true)}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-3 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition-colors"
+        className="fixed bottom-6 right-4 md:right-6 z-40 flex items-center gap-2 px-3 py-2.5 md:px-4 md:py-3 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition-colors"
         data-testid="ai-chat-fab"
         aria-label="Open AI assistant"
       >

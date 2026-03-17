@@ -516,7 +516,7 @@ function TaskDetailPanel() {
 
       {/* Panel */}
       <div
-        className={`fixed top-0 right-0 h-full w-96 bg-white dark:bg-gray-900 shadow-xl z-30 flex flex-col transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 h-full w-full md:w-96 bg-white dark:bg-gray-900 shadow-xl z-30 flex flex-col transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
         data-testid="task-detail-panel"

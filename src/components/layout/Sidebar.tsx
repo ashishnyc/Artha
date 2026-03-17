@@ -10,14 +10,17 @@ function NavItem({
   to,
   label,
   count,
+  onClick,
 }: {
   to: string
   label: string
   count?: number
+  onClick?: () => void
 }) {
   return (
     <NavLink
       to={to}
+      onClick={onClick}
       className={({ isActive }) =>
         `flex items-center justify-between px-4 py-2 rounded-lg text-sm transition-colors ${
           isActive
@@ -44,7 +47,7 @@ const THEME_ICONS: Record<Theme, string> = {
 
 const THEMES: Theme[] = ['light', 'dark', 'system']
 
-function Sidebar() {
+function Sidebar({ isOpen = false, onClose }: { isOpen?: boolean; onClose?: () => void }) {
   const { taskLists } = useTaskLists()
   const tasks = useAppStore((s) => s.tasks)
   const { theme, setTheme } = useTheme()
@@ -98,25 +101,51 @@ function Sidebar() {
     }
   }
 
+  const close = onClose ?? (() => {})
+
   return (
-    <aside
-      className="w-64 h-full bg-gray-900 text-white flex flex-col shrink-0"
-      data-testid="sidebar"
-    >
+    <>
+      {/* Mobile backdrop */}
+      {isOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-40 bg-black/50"
+          onClick={close}
+          data-testid="sidebar-backdrop"
+        />
+      )}
+
+      <aside
+        className={`
+          fixed md:relative top-0 left-0 z-50 md:z-auto
+          w-64 h-full bg-gray-900 text-white flex flex-col shrink-0
+          transition-transform duration-300 ease-in-out
+          ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        `}
+        data-testid="sidebar"
+      >
       {/* App name */}
-      <div className="px-6 py-5 border-b border-gray-700">
+      <div className="px-6 py-5 border-b border-gray-700 flex items-center justify-between">
         <span className="text-lg font-semibold tracking-wide">Artha</span>
+        <button
+          onClick={close}
+          className="md:hidden text-gray-400 hover:text-white transition-colors"
+          aria-label="Close menu"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
 
       {/* Smart lists */}
       <nav className="px-3 pt-4 space-y-1" data-testid="smart-lists">
-        <NavItem to="/inbox" label="Inbox" />
-        <NavItem to="/today" label="Today" />
-        <NavItem to="/upcoming" label="Upcoming" />
-        <NavItem to="/calendar" label="Calendar" />
-        <NavItem to="/priority" label="High Priority" />
-        <NavItem to="/pomodoro" label="Pomodoro" />
-        <NavItem to="/matrix" label="Matrix" />
+        <NavItem to="/inbox" label="Inbox" onClick={close} />
+        <NavItem to="/today" label="Today" onClick={close} />
+        <NavItem to="/upcoming" label="Upcoming" onClick={close} />
+        <NavItem to="/calendar" label="Calendar" onClick={close} />
+        <NavItem to="/priority" label="High Priority" onClick={close} />
+        <NavItem to="/pomodoro" label="Pomodoro" onClick={close} />
+        <NavItem to="/matrix" label="Matrix" onClick={close} />
       </nav>
 
       {/* User task lists */}
@@ -131,6 +160,7 @@ function Sidebar() {
               to={`/list/${list.id}`}
               label={list.title}
               count={taskCount(list.id)}
+              onClick={close}
             />
           ))}
         </nav>
@@ -148,6 +178,7 @@ function Sidebar() {
               to={`/tag/${encodeURIComponent(tag)}`}
               label={`#${tag}`}
               count={tagCounts[tag]}
+              onClick={close}
             />
           ))}
         </nav>
@@ -221,6 +252,7 @@ function Sidebar() {
         )}
       </div>
     </aside>
+    </>
   )
 }
 
