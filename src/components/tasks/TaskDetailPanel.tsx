@@ -505,19 +505,19 @@ function TaskDetailPanel() {
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop — mobile only */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-20"
+          className="fixed inset-0 z-20 md:hidden"
           onClick={clearSelectedTask}
           data-testid="task-detail-backdrop"
         />
       )}
 
-      {/* Panel */}
+      {/* Panel — push layout on desktop, overlay on mobile */}
       <div
-        className={`fixed top-0 right-0 h-full w-full md:w-96 bg-white dark:bg-gray-900 shadow-xl z-30 flex flex-col transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
+        className={`fixed top-0 right-0 h-full w-full z-30 md:relative md:top-auto md:right-auto md:z-auto md:translate-x-0 bg-white dark:bg-gray-900 shadow-xl flex flex-col overflow-hidden transition-transform md:transition-[width] duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0 md:w-96' : 'translate-x-full md:w-0'
         }`}
         data-testid="task-detail-panel"
       >
